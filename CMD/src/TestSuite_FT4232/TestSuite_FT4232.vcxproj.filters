@@ -1,0 +1,110 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="TEST CASES\TESTCASES.cpp">
+      <Filter>TEST CASES</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST SUITE\TestLogger.cpp">
+      <Filter>TEST SUITE</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST SUITE\TestOutput.cpp">
+      <Filter>TEST SUITE</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST SUITE\TestSuite.cpp">
+      <Filter>TEST SUITE</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST SUITE\TestExamples.cpp">
+      <Filter>TEST SUITE</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST CASES\D2XX\ftd2xxTest.cpp">
+      <Filter>TEST CASES\D2XX</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST CASES\MPSSE\mpsseI2CTest.cpp">
+      <Filter>TEST CASES\MPSSE</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST CASES\MPSSE\mpsseSPITest.cpp">
+      <Filter>TEST CASES\MPSSE</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST CASES\D2XX\ftdiIds.cpp">
+      <Filter>TEST CASES\D2XX</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST CASES\D2XX\ftd2xxLoopbackTest.cpp">
+      <Filter>TEST CASES\D2XX</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST CASES\D2XX\ftd2xxJtagTest.cpp">
+      <Filter>TEST CASES\D2XX</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST CASES\MPSSE\mpsseJTAGTest.cpp">
+      <Filter>TEST CASES\MPSSE</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST CASES\MPSSE\mpsseSPIFlashTest.cpp">
+      <Filter>TEST CASES\MPSSE</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST CASES\MPSSE\SPIFlash.cpp">
+      <Filter>TEST CASES\MPSSE</Filter>
+    </ClCompile>
+    <ClCompile Include="TEST CASES\USB\USB.cpp">
+      <Filter>TEST CASES\USB</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="TEST CASES\TESTCASES.h">
+      <Filter>TEST CASES</Filter>
+    </ClInclude>
+    <ClInclude Include="TEST SUITE\TestLogger.h">
+      <Filter>TEST SUITE</Filter>
+    </ClInclude>
+    <ClInclude Include="TEST SUITE\TestOutput.h">
+      <Filter>TEST SUITE</Filter>
+    </ClInclude>
+    <ClInclude Include="TEST SUITE\TestSuite.h">
+      <Filter>TEST SUITE</Filter>
+    </ClInclude>
+    <ClInclude Include="TEST SUITE\TestExamples.h">
+      <Filter>TEST SUITE</Filter>
+    </ClInclude>
+    <ClInclude Include="TEST CASES\D2XX\ftd2xx.h">
+      <Filter>TEST CASES\D2XX</Filter>
+    </ClInclude>
+    <ClInclude Include="TEST CASES\MPSSE\libMPSSE_i2c.h">
+      <Filter>TEST CASES\MPSSE</Filter>
+    </ClInclude>
+    <ClInclude Include="TEST CASES\MPSSE\libMPSSE_spi.h">
+      <Filter>TEST CASES\MPSSE</Filter>
+    </ClInclude>
+    <ClInclude Include="TEST CASES\D2XX\ftdiIds.h">
+      <Filter>TEST CASES\D2XX</Filter>
+    </ClInclude>
+    <ClInclude Include="TEST CASES\MPSSE\FTCJTAG.h">
+      <Filter>TEST CASES\MPSSE</Filter>
+    </ClInclude>
+    <ClInclude Include="TEST CASES\MPSSE\SPIFlash.h">
+      <Filter>TEST CASES\MPSSE</Filter>
+    </ClInclude>
+    <ClInclude Include="TEST CASES\USB\USB.h">
+      <Filter>TEST CASES\USB</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="TEST SUITE">
+      <UniqueIdentifier>{d81221a4-d0b6-4778-9f96-50a3ae7a58c3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TEST CASES">
+      <UniqueIdentifier>{505e1db1-1061-42f8-9d97-54c56c03ed31}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TEST CASES\D2XX">
+      <UniqueIdentifier>{37c6f5b4-8845-4313-b009-9f09715e2d89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TEST CASES\MPSSE">
+      <UniqueIdentifier>{a50b9fbf-5478-40c8-8961-1c924af1e762}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="TEST CASES\USB">
+      <UniqueIdentifier>{4861c8b3-274b-4699-9cf6-6a93fe26f02f}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="TEST CASES\README.txt">
+      <Filter>TEST CASES</Filter>
+    </Text>
+  </ItemGroup>
+</Project>
