@@ -142,6 +142,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ReadIDs()
 {
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
+	boolean bFound = false;
 
 
 	Init_libMPSSE();
@@ -176,6 +177,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ReadIDs()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -227,16 +229,18 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ReadIDs()
 			CMD_LOG("UNIQUE ID=0x%0llx\n", ullUniqueID);
 			CMD_LOG("\n");
 
+			if (ulJedecID == 0 || ulManID == 0 || ullUniqueID == 0) {
+				ftStatus = FT_OTHER_ERROR;
+			}
 
 			delete pSpiFlash;
 			pSpiFlash = NULL;
 		}
 
+		SPI_CloseChannel(ftHandle);
 
-		ftStatus = SPI_CloseChannel(ftHandle);
-		if (ftStatus != FT_OK) {
-			CMD_LOG("SPI_CloseChannel failed!\n");
-			goto exit;
+		if (bFound) {
+			break;
 		}
 	}
 
@@ -250,6 +254,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Power()
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
 	bool bRet = false;
+	boolean bFound = false;
 
 
 	Init_libMPSSE();
@@ -284,6 +289,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Power()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -342,6 +348,10 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Power()
 			CMD_LOG("UNIQUE ID=0x%0llx\n", ullUniqueID);
 			CMD_LOG("\n");
 
+			if (ulJedecID == 0 || ulManID == 0 || ullUniqueID == 0) {
+				ftStatus = FT_OTHER_ERROR;
+			}
+
 			bRet = pSpiFlash->powerDown();
 			CMD_LOG("Power down: %s!\n", bRet ? "successful" : "failed");
 			bRet = pSpiFlash->powerUp();
@@ -367,16 +377,18 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Power()
 			CMD_LOG("UNIQUE ID=0x%0llx\n", ullUniqueID);
 			CMD_LOG("\n");
 
+			if (ulJedecID == 0 || ulManID == 0 || ullUniqueID == 0) {
+				ftStatus = FT_OTHER_ERROR;
+			}
 
 			delete pSpiFlash;
 			pSpiFlash = NULL;
 		}
 
+		SPI_CloseChannel(ftHandle);
 
-		ftStatus = SPI_CloseChannel(ftHandle);
-		if (ftStatus != FT_OK) {
-			CMD_LOG("SPI_CloseChannel failed!\n");
-			goto exit;
+		if (bFound) {
+			break;
 		}
 	}
 
@@ -390,6 +402,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Suspend()
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
 	bool bRet = false;
+	boolean bFound = false;
 
 
 	Init_libMPSSE();
@@ -424,6 +437,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Suspend()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -482,6 +496,10 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Suspend()
 			CMD_LOG("UNIQUE ID=0x%0llx\n", ullUniqueID);
 			CMD_LOG("\n");
 
+			if (ulJedecID == 0 || ulManID == 0 || ullUniqueID == 0) {
+				ftStatus = FT_OTHER_ERROR;
+			}
+
 			bRet = pSpiFlash->suspendProg();
 			CMD_LOG("Suspend: %s!\n", bRet ? "successful" : "failed");
 			bRet = pSpiFlash->resumeProg();
@@ -507,16 +525,18 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Suspend()
 			CMD_LOG("UNIQUE ID=0x%0llx\n", ullUniqueID);
 			CMD_LOG("\n");
 
+			if (ulJedecID == 0 || ulManID == 0 || ullUniqueID == 0) {
+				ftStatus = FT_OTHER_ERROR;
+			}
 
 			delete pSpiFlash;
 			pSpiFlash = NULL;
 		}
 
+		SPI_CloseChannel(ftHandle);
 
-		ftStatus = SPI_CloseChannel(ftHandle);
-		if (ftStatus != FT_OK) {
-			CMD_LOG("SPI_CloseChannel failed!\n");
-			goto exit;
+		if (bFound) {
+			break;
 		}
 	}
 
@@ -530,6 +550,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_BasicIO()
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
 	bool bRet = false;
+	boolean bFound = false;
 
 
 	Init_libMPSSE();
@@ -564,6 +585,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_BasicIO()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -666,10 +688,10 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_BasicIO()
 		}
 
 
-		ftStatus = SPI_CloseChannel(ftHandle);
-		if (ftStatus != FT_OK) {
-			CMD_LOG("SPI_CloseChannel failed!\n");
-			goto exit;
+		SPI_CloseChannel(ftHandle);
+
+		if (bFound) {
+			break;
 		}
 	}
 
@@ -683,6 +705,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_SimpleIO()
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
 	bool bRet = false;
+	boolean bFound = false;
 
 
 	Init_libMPSSE();
@@ -717,6 +740,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_SimpleIO()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -803,10 +827,10 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_SimpleIO()
 		}
 
 
-		ftStatus = SPI_CloseChannel(ftHandle);
-		if (ftStatus != FT_OK) {
-			CMD_LOG("SPI_CloseChannel failed!\n");
-			goto exit;
+		SPI_CloseChannel(ftHandle);
+
+		if (bFound) {
+			break;
 		}
 	}
 
@@ -820,6 +844,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Erase()
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
 	bool bRet = false;
+	boolean bFound = false;
 
 
 	Init_libMPSSE();
@@ -854,6 +879,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Erase()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -931,10 +957,10 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Erase()
 		}
 
 
-		ftStatus = SPI_CloseChannel(ftHandle);
-		if (ftStatus != FT_OK) {
-			CMD_LOG("SPI_CloseChannel failed!\n");
-			goto exit;
+		SPI_CloseChannel(ftHandle);
+
+		if (bFound) {
+			break;
 		}
 	}
 
