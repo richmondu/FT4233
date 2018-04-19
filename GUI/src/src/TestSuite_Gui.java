@@ -14,11 +14,14 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 	private static final long serialVersionUID = 1L;
 	private JButton btnRun;
 	private JButton btnStop;
+	private JRadioButton radioEnum;
 	private JRadioButton radioLoopback;
 	private JRadioButton radioMPSSE;
 	private JRadioButton radioFastSerial;
 	private JRadioButton radioJTAG;
 	private JRadioButton radioSpiFlash;
+	private JRadioButton radioSpiEeprom;
+	private JRadioButton radioI2cEeprom;
 	private JTextField txtDev1;
 	private JTextField txtDev2;
 	private JTextField txtSize;
@@ -27,18 +30,24 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 	private JTextArea textArea;
 	private String path;
 
-	private final int MAINCOMMAND_LOOPBACK = 0;
-	private final int MAINCOMMAND_MPSSE = 1;
-	private final int MAINCOMMAND_FASTSERIAL = 2;
-	private final int MAINCOMMAND_JTAG = 3;
-	private final int MAINCOMMAND_SPIFLASH = 4;
+	private final int MAINCOMMAND_ENUMERATE = 0;
+	private final int MAINCOMMAND_LOOPBACK = 1;
+	private final int MAINCOMMAND_MPSSE = 2;
+	private final int MAINCOMMAND_FASTSERIAL = 3;
+	private final int MAINCOMMAND_JTAG = 4;
+	private final int MAINCOMMAND_SPIFLASH = 5;
+	private final int MAINCOMMAND_SPIEEPROM = 6;
+	private final int MAINCOMMAND_I2CEEPROM = 7;
 	
 	private final String[] MAINCOMMAND_ARRAY = {
+			"Enumerate devices", 
 			"Loopback test", 
 			"MPSSE test", 
 			"Fast Serial test", 
 			"JTAG test", 
-			"SPI Flash test"
+			"SPI Flash test",
+			"SPI EEPROM test",
+			"I2C EEPROM test",
 			};
 	
 	// Constructor to setup the GUI components and event handlers
@@ -55,32 +64,36 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 	    //
 	    
     	JLabel lblTestDevices = new JLabel("DEVICES TO TEST");
-    	lblTestDevices.setBounds(37, 255, 125, 14);
+    	lblTestDevices.setBounds(37, 355, 125, 14);
     	getContentPane().add(lblTestDevices);
     	
     	txtDev1 = new JTextField();
     	txtDev1.setToolTipText("Empty means test all devices");
-    	txtDev1.setBounds(37, 280, 125, 20);
+    	txtDev1.setBounds(37, 380, 125, 20);
     	getContentPane().add(txtDev1);
     	txtDev1.setColumns(10);
     	txtDev1.setText("\"UMFTPD2A A\"");
+    	txtDev1.setEnabled(false);
     	
     	txtDev2 = new JTextField();
     	txtDev2.setToolTipText("Applicable only for Loopback test");
-    	txtDev2.setBounds(37, 305, 125, 20);
+    	txtDev2.setBounds(37, 405, 125, 20);
     	getContentPane().add(txtDev2);
     	txtDev2.setColumns(10);
     	txtDev2.setText("\"UMFTPD2A B\"");
+    	txtDev2.setEnabled(false);
 
     	lblNewLabel = new JLabel("Loopback Size");
-    	lblNewLabel.setBounds(37, 333, 89, 14);
+    	lblNewLabel.setBounds(37, 433, 89, 14);
     	getContentPane().add(lblNewLabel);    	
+    	lblNewLabel.setEnabled(false);
     	
     	txtSize = new JTextField();
-    	txtSize.setBounds(126, 330, 36, 20);
+    	txtSize.setBounds(126, 430, 36, 20);
     	getContentPane().add(txtSize);
     	txtSize.setColumns(10);
     	txtSize.setText("1024");
+    	txtSize.setEnabled(false);
 
     	
 		//
@@ -90,13 +103,27 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 	    JLabel lblTestMode = new JLabel("TEST MODE");
 	    lblTestMode.setBounds(37, 31, 125, 14);
 	    getContentPane().add(lblTestMode);
-		
+	    
+	    radioEnum = new JRadioButton(MAINCOMMAND_ARRAY[MAINCOMMAND_ENUMERATE]);
+	    radioEnum.setBounds(37, 56, 157, 23);
+	    radioEnum.setSelected(true);
+	    radioEnum.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	txtDev1.setEnabled(false);
+            	txtDev2.setEnabled(false);
+            	txtSize.setEnabled(false);
+            	lblNewLabel.setEnabled(false);
+            }
+        });
+	    getContentPane().add(radioEnum);
+	    
 	    radioLoopback = new JRadioButton(MAINCOMMAND_ARRAY[MAINCOMMAND_LOOPBACK]);
-	    radioLoopback.setBounds(37, 56, 125, 23);
-	    radioLoopback.setSelected(true);
+	    radioLoopback.setBounds(37, 82, 125, 23);
 	    radioLoopback.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+            	txtDev1.setEnabled(true);
             	txtDev2.setEnabled(true);
             	txtSize.setEnabled(true);
             	lblNewLabel.setEnabled(true);
@@ -105,10 +132,11 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 	    getContentPane().add(radioLoopback);
 	    
 	    radioMPSSE = new JRadioButton(MAINCOMMAND_ARRAY[MAINCOMMAND_MPSSE]);
-	    radioMPSSE.setBounds(37, 82, 125, 23);
+	    radioMPSSE.setBounds(37, 108, 125, 23);
 	    radioMPSSE.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+            	txtDev1.setEnabled(true);
             	txtDev2.setEnabled(false);
             	txtSize.setEnabled(false);
             	lblNewLabel.setEnabled(false);
@@ -117,10 +145,11 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 	    getContentPane().add(radioMPSSE);
 	    
 	    radioFastSerial = new JRadioButton(MAINCOMMAND_ARRAY[MAINCOMMAND_FASTSERIAL]);
-	    radioFastSerial.setBounds(37, 108, 125, 23);
+	    radioFastSerial.setBounds(37, 134, 125, 23);
 	    radioFastSerial.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+            	txtDev1.setEnabled(true);
             	txtDev2.setEnabled(false);
             	txtSize.setEnabled(false);
             	lblNewLabel.setEnabled(false);
@@ -129,10 +158,11 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 	    getContentPane().add(radioFastSerial);
 
 	    radioJTAG = new JRadioButton(MAINCOMMAND_ARRAY[MAINCOMMAND_JTAG]);
-	    radioJTAG.setBounds(37, 134, 125, 23);
+	    radioJTAG.setBounds(37, 160, 125, 23);
 	    radioJTAG.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+            	txtDev1.setEnabled(true);
             	txtDev2.setEnabled(false);
             	txtSize.setEnabled(false);
             	lblNewLabel.setEnabled(false);
@@ -141,23 +171,53 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 	    getContentPane().add(radioJTAG);
 
 	    radioSpiFlash = new JRadioButton(MAINCOMMAND_ARRAY[MAINCOMMAND_SPIFLASH]);
-	    radioSpiFlash.setBounds(37, 160, 125, 23);
+	    radioSpiFlash.setBounds(37, 186, 125, 23);
 	    radioSpiFlash.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+            	txtDev1.setEnabled(true);
             	txtDev2.setEnabled(false);
             	txtSize.setEnabled(false);
             	lblNewLabel.setEnabled(false);
             }
         });
 	    getContentPane().add(radioSpiFlash);	    
+
+	    radioSpiEeprom = new JRadioButton(MAINCOMMAND_ARRAY[MAINCOMMAND_SPIEEPROM]);
+	    radioSpiEeprom.setBounds(37, 212, 125, 23);
+	    radioSpiEeprom.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	txtDev1.setEnabled(true);
+            	txtDev2.setEnabled(false);
+            	txtSize.setEnabled(false);
+            	lblNewLabel.setEnabled(false);
+            }
+        });
+	    getContentPane().add(radioSpiEeprom);	    
+
+	    radioI2cEeprom = new JRadioButton(MAINCOMMAND_ARRAY[MAINCOMMAND_I2CEEPROM]);
+	    radioI2cEeprom.setBounds(37, 238, 125, 23);
+	    radioI2cEeprom.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+            	txtDev1.setEnabled(true);
+            	txtDev2.setEnabled(false);
+            	txtSize.setEnabled(false);
+            	lblNewLabel.setEnabled(false);
+            }
+        });
+	    getContentPane().add(radioI2cEeprom);	    
 	    
 	    ButtonGroup group = new ButtonGroup();
+	    group.add(radioEnum);
 	    group.add(radioLoopback);
 	    group.add(radioMPSSE);
 	    group.add(radioFastSerial);
 	    group.add(radioJTAG);
 	    group.add(radioSpiFlash);
+	    group.add(radioSpiEeprom);
+	    group.add(radioI2cEeprom);
 	    
 	    
 	    //
@@ -166,11 +226,11 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 
 	    textArea = new JTextArea();
 	    textArea.setEditable(false);
-	    textArea.setBounds(200, 31, 500, 320);
+	    textArea.setBounds(200, 30, 500, 420);
 	    getContentPane().add(textArea);
 
 	    JScrollPane scrollPane = new JScrollPane(textArea);
-	    scrollPane.setBounds(200, 30, 500, 320);
+	    scrollPane.setBounds(200, 30, 500, 420);
 	    scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 	    scrollPane.setViewportView(textArea);
 	    scrollPane.setEnabled(true);
@@ -184,7 +244,7 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 	    scrollBar.setEnabled(true);
 	    
 	    btnClear = new JButton("Clear");
-	    btnClear.setBounds(611, 360, 89, 23);
+	    btnClear.setBounds(611, 460, 89, 23);
 	    btnClear.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -199,12 +259,12 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 	    //
 	    
 	    btnRun = new JButton("Run");
-	    btnRun.setBounds(37, 190, 61, 23);
+	    btnRun.setBounds(37, 270, 61, 23);
 	    btnRun.setEnabled(true);
 	    getContentPane().add(btnRun);
 	    
 	    btnStop = new JButton("Stop");
-	    btnStop.setBounds(101, 190, 61, 23);
+	    btnStop.setBounds(101, 270, 61, 23);
 	    btnStop.setEnabled(false);
 	    getContentPane().add(btnStop);
 	    
@@ -233,31 +293,36 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 
 	private void enableControls(boolean bEnable) {
 		if (!bEnable) {
+			txtDev1.setEnabled(bEnable);   
 			txtDev2.setEnabled(bEnable);   
 	    	txtSize.setEnabled(bEnable);
 	    	lblNewLabel.setEnabled(bEnable);
 		}
 		else {
 			boolean bLoopbackSelected = radioLoopback.isSelected();
+			boolean bEnumerateSelected = radioEnum.isSelected();
+			txtDev1.setEnabled(!bEnumerateSelected);   
 			txtDev2.setEnabled(bLoopbackSelected);   
 	    	txtSize.setEnabled(bLoopbackSelected);
 	    	lblNewLabel.setEnabled(bLoopbackSelected);
 		}
     	btnRun.setEnabled(bEnable);
     	btnStop.setEnabled(!bEnable);
+    	radioEnum.setEnabled(bEnable);
     	radioLoopback.setEnabled(bEnable);
     	radioMPSSE.setEnabled(bEnable);
     	radioFastSerial.setEnabled(bEnable);
     	radioJTAG.setEnabled(bEnable);
     	radioSpiFlash.setEnabled(bEnable);
-    	txtDev1.setEnabled(bEnable);
+    	radioSpiEeprom.setEnabled(bEnable);
+    	radioI2cEeprom.setEnabled(bEnable);
     	btnClear.setEnabled(bEnable);
 	}	
 	
 	private void initUI() {
 	    
 	    setTitle("Test Suite");
-	    setSize(750, 450);
+	    setSize(750, 550);
 	    setLocationRelativeTo(null);
 	    setDefaultCloseOperation(EXIT_ON_CLOSE);
 	    setVisible(true);
@@ -296,7 +361,7 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
             		try {
                     	String[] cmd = null;
                     	if (this.mode == null) {
-                    		cmd = new String[]{this.path};
+                    		cmd = new String[]{this.path, "-e"};
                     	}
                     	else {
                     		if (this.dev1.length() != 0 && this.dev2.length() != 0) {
@@ -357,7 +422,12 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
     		String dev1 = null;
     		String dev2 = null;
     		String size = null;
-    		if (radioLoopback.isSelected()) {
+    		if (radioEnum.isSelected()) {
+    			dev1 = new String(txtDev1.getText());
+    			dev2 = new String("");
+    			size = new String("0");
+    		}
+    		else if (radioLoopback.isSelected()) {
     			mode = new String("loopback");
     			dev1 = new String(txtDev1.getText());
     			dev2 = new String(txtDev2.getText());
@@ -383,6 +453,18 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
     		}
     		else if (radioSpiFlash.isSelected()) {
     			mode = new String("spiflash");
+    			dev1 = new String(txtDev1.getText());
+    			dev2 = new String("");
+    			size = new String("0");
+    		}
+    		else if (radioSpiEeprom.isSelected()) {
+    			mode = new String("spieeprom");
+    			dev1 = new String(txtDev1.getText());
+    			dev2 = new String("");
+    			size = new String("0");
+    		}
+    		else if (radioI2cEeprom.isSelected()) {
+    			mode = new String("i2ceeprom");
     			dev1 = new String(txtDev1.getText());
     			dev2 = new String("");
     			size = new String("0");

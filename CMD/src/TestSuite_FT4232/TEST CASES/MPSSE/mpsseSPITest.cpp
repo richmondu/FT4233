@@ -4,6 +4,7 @@
 #include "../../TEST SUITE/TestLogger.h"
 #pragma comment(lib, "libMPSSE.lib")
 #include <stdio.h>
+#include <conio.h>
 
 
 
@@ -14,6 +15,18 @@ bool FT4232_MPSSE_SPI_Enumerate()
 	bool bFound = false;
 
 
+	if (!DeviceNameIsSet()) {
+		CMD_LOG("NOTES:\n");
+		CMD_LOG("1. D2XX_Enumerate enumerates D2XX devices detected by D2XX library ftd2xx.dll.\n");
+		CMD_LOG("2. MPSSE_Enumerate enumerates D2XX devices detected as MPSSE capable\n");
+		CMD_LOG("   by MPSSE library libMPSSE.lib/libMPSSE.dll.\n");
+		CMD_LOG("3. If the device is not enumerated by MPSSE, refer to D2XX LocID issue.\n");
+		CMD_LOG("   MPSSE library uses LocID to determine if the channel is MPSSE capable.\n");
+		CMD_LOG("   The current MPSSE workaround only applies to known devices.\n");
+		CMD_LOG("   Please contact me if your device is not detected by MPSSE!\n");
+		CMD_LOG("\n");
+	}
+
 	Init_libMPSSE();
 
 	ftStatus = SPI_GetNumChannels(&ulNumChannels);
@@ -21,6 +34,8 @@ bool FT4232_MPSSE_SPI_Enumerate()
 		CMD_LOG("SPI_GetNumChannels failed!\n");
 		goto exit;
 	}
+
+	CMD_LOG("DeviceCount=%d\n", ulNumChannels);
 	if (!ulNumChannels) {
 		CMD_LOG("SPI_GetNumChannels failed! No channels found! ulNumChannels=%d\n", ulNumChannels);
 		ftStatus = FT_DEVICE_NOT_FOUND;
@@ -239,7 +254,7 @@ exit:
 	return (ftStatus == FT_OK);
 }
 
-static FT_STATUS read_byte(FT_HANDLE ftHandle, uint8 slaveAddress, uint8 address, uint16 *data)
+static FT_STATUS read_byte_EEPROM93LC56B(FT_HANDLE ftHandle, uint8 slaveAddress, uint8 address, uint16 *data)
 {
 	uint8 buffer[32] = { 0 };
 	uint32 sizeToTransfer = 0;
@@ -289,7 +304,7 @@ static FT_STATUS read_byte(FT_HANDLE ftHandle, uint8 slaveAddress, uint8 address
 	return status;
 }
 
-static FT_STATUS write_byte(FT_HANDLE ftHandle, uint8 slaveAddress, uint8 address, uint16 data)
+static FT_STATUS write_byte_EEPROM93LC56B(FT_HANDLE ftHandle, uint8 slaveAddress, uint8 address, uint16 data)
 {
 	uint8 buffer[32] = { 0 };
 	uint32 sizeToTransfer = 0;
@@ -406,10 +421,16 @@ static FT_STATUS write_byte(FT_HANDLE ftHandle, uint8 slaveAddress, uint8 addres
 //   93LC56B Datasheet can be downloaded at
 //   http://ww1.microchip.com/downloads/en/DeviceDoc/21794F.pdf
 // Must connect EEPROM 24LC024H to UMFTPD2A: SCK, MISO, MOSI, GND, VCC
-bool FT4232_MPSSE_SPI_IO_EEPROM93LC56B()
+bool FT4232_MPSSE_SPI_IO_EEPROM93LC56B_BasicIO()
 {
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
+	boolean bFound = false;
+	FT_HANDLE ftHandle = NULL;
+	ChannelConfig config;
+	uint8 addressSlave = 0;
+	uint8 addressStart = 0;
+	uint8 addressEnd = 32;
 
 
 	Init_libMPSSE();
@@ -431,6 +452,7 @@ bool FT4232_MPSSE_SPI_IO_EEPROM93LC56B()
 		goto exit;
 	}
 
+	srand(NULL);
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -440,24 +462,25 @@ bool FT4232_MPSSE_SPI_IO_EEPROM93LC56B()
 			goto exit;
 		}
 
-		if (DeviceNameIsSet()) {
-			if (!DeviceNameCompare(devInfo.Description)) {
-				continue;
-			}
-		}
-
 		CMD_LOG("Dev %d:\n", i);
 		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
 		CMD_LOG("  Description=%s\n", devInfo.Description);
 
-		FT_HANDLE ftHandle = NULL;
+		if (DeviceNameIsSet()) {
+			if (!DeviceNameCompare(devInfo.Description)) {
+				continue;
+			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
+		}
+
+		ftHandle = NULL;
 		ftStatus = SPI_OpenChannel(i, &ftHandle);
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_OpenChannel failed! Cannot open MPSSE channel\n");
 			goto exit;
 		}
 
-		ChannelConfig config;
 		config.ClockRate = I2C_CLOCK_HIGH_SPEED_MODE;
 		config.LatencyTimer = 255;
 		config.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3;
@@ -471,33 +494,332 @@ bool FT4232_MPSSE_SPI_IO_EEPROM93LC56B()
 			goto exit;
 		}
 
-		uint8 addressSlave = 0;
-		uint8 addressStart = 0;
-		uint8 addressEnd = 5;
-
 		for (uint8 offset = addressStart; offset < addressEnd; offset++) {
 
-			CMD_LOG("writing address = %d data = %d\n", offset, 0xAA + offset);
-			ftStatus = write_byte(ftHandle, addressSlave, offset, 0xAA + offset);
+			uint16 input = (uint16)(0xAA55 + rand());
+			CMD_LOG("  writing address = %d data = %d\n", offset, input);
+			ftStatus = write_byte_EEPROM93LC56B(ftHandle, addressSlave, offset, input);
 			if (ftStatus != FT_OK) {
-				CMD_LOG("write_byte failed!\n");
-				SPI_CloseChannel(ftHandle);
+				CMD_LOG("write_byte failed! ftStatus=0x%08x\n", ftStatus);
 				goto exit;
 			}
 
-			uint16 data = 0;
-			ftStatus = read_byte(ftHandle, addressSlave, offset, &data);
-			CMD_LOG("reading address = %d data = %d\n", offset, data);
+			uint16 output = 0;
+			ftStatus = read_byte_EEPROM93LC56B(ftHandle, addressSlave, offset, &output);
+			CMD_LOG("  reading address = %d data = %d\n", offset, output);
 			if (ftStatus != FT_OK) {
-				CMD_LOG("write_byte failed!\n");
-				SPI_CloseChannel(ftHandle);
+				CMD_LOG("read_byte failed! ftStatus=0x%08x\n", ftStatus);
 				goto exit;
 			}
 
-			if (data != 0xAA + offset) {
+			if (output != input) {
 				CMD_LOG("ERROR: data mismatch! Please check sk, cs, di, do connection as well as vcc and gnd\n");
-				SPI_CloseChannel(ftHandle);
+				ftStatus = FT_OTHER_ERROR;
 				goto exit;
+			}
+		}
+		CMD_LOG("  Channel write/read successfully\n");
+
+		ftStatus = SPI_CloseChannel(ftHandle);
+		if (ftStatus != FT_OK) {
+			CMD_LOG("SPI_CloseChannel failed!\n");
+			goto exit;
+		}
+		ftHandle = NULL;
+
+		if (bFound) {
+			break;
+		}
+	}
+
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+		}
+	}
+
+exit:
+	if (ftHandle != NULL) {
+		SPI_CloseChannel(ftHandle);
+		ftHandle = NULL;
+	}
+	Cleanup_libMPSSE();
+	return (ftStatus == FT_OK);
+}
+
+bool FT4232_MPSSE_SPI_IO_EEPROM93LC56B_ClockedIO()
+{
+	FT_STATUS ftStatus = FT_OK;
+	uint32 ulNumChannels = 0;
+	boolean bFound = false;
+	FT_HANDLE ftHandle = NULL;
+	ChannelConfig config;
+	uint8 addressSlave = 0;
+	uint8 addressStart = 0;
+	uint8 addressEnd = 64;
+	const I2C_CLOCKRATE ClockRate[] = {
+		I2C_CLOCK_STANDARD_MODE ,
+		I2C_CLOCK_FAST_MODE,
+		I2C_CLOCK_FAST_MODE_PLUS,
+		I2C_CLOCK_HIGH_SPEED_MODE
+	};
+	const uint8 Latency[] = { 1, 8, 64, 255 };
+
+
+	Init_libMPSSE();
+
+	ftStatus = SPI_GetNumChannels(&ulNumChannels);
+	if (ftStatus != FT_OK) {
+		CMD_LOG("SPI_GetNumChannels failed!\n");
+		goto exit;
+	}
+	if (!ulNumChannels) {
+		CMD_LOG("SPI_GetNumChannels failed! No channels found! ulNumChannels=%d\n", ulNumChannels);
+		ftStatus = FT_DEVICE_NOT_FOUND;
+		goto exit;
+	}
+
+	if (ulNumChannels != 2 && ulNumChannels != 1) {
+		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
+		ftStatus = FT_OTHER_ERROR;
+		goto exit;
+	}
+
+	srand(NULL);
+	for (uint32 i = 0; i < ulNumChannels; i++) {
+		FT_DEVICE_LIST_INFO_NODE devInfo;
+		ftStatus = SPI_GetChannelInfo(i, &devInfo);
+		if (ftStatus != FT_OK) {
+			CMD_LOG("SPI_GetChannelInfo failed!\n");
+			ftStatus = FT_OTHER_ERROR;
+			goto exit;
+		}
+
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
+		CMD_LOG("  Description=%s\n", devInfo.Description);
+
+		if (DeviceNameIsSet()) {
+			if (!DeviceNameCompare(devInfo.Description)) {
+				continue;
+			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
+		}
+
+		for (int j = 0; j < sizeof(ClockRate) / sizeof(ClockRate[0]); j++) {
+			for (int k = 0; k < sizeof(Latency) / sizeof(Latency[0]); k++) {
+
+				ftHandle = NULL;
+				ftStatus = SPI_OpenChannel(i, &ftHandle);
+				if (ftStatus != FT_OK) {
+					CMD_LOG("SPI_OpenChannel failed! Cannot open MPSSE channel\n");
+					goto exit;
+				}
+
+				config.ClockRate = (I2C_CLOCKRATE)ClockRate[j];
+				config.LatencyTimer = (uint8)Latency[k];
+				config.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3;
+				config.Pin = 0;
+
+				CMD_LOG("  Channel configured successfully: ClkRate=%07d LatencyTmr=%03d Options=%02d\n",
+					config.ClockRate, config.LatencyTimer, config.configOptions);
+
+				ftStatus = SPI_InitChannel(ftHandle, &config);
+				if (ftStatus != FT_OK) {
+					CMD_LOG("SPI_InitChannel failed! Cannot configure MPSSE channel ClockRate=%d LatencyTimer=%d Options=%02d\n",
+						config.ClockRate, config.LatencyTimer, config.configOptions);
+					SPI_CloseChannel(ftHandle);
+					goto exit;
+				}
+
+				for (uint8 offset = addressStart; offset < addressEnd; offset++) {
+
+					uint16 input = (uint16)(0xAA55 + rand());
+					CMD_LOG("  writing address = %d data = %d\n", offset, input);
+					ftStatus = write_byte_EEPROM93LC56B(ftHandle, addressSlave, offset, input);
+					if (ftStatus != FT_OK) {
+						CMD_LOG("write_byte failed! ftStatus=0x%08x\n", ftStatus);
+						goto exit;
+					}
+
+					uint16 output = 0;
+					ftStatus = read_byte_EEPROM93LC56B(ftHandle, addressSlave, offset, &output);
+					CMD_LOG("  reading address = %d data = %d\n", offset, output);
+					if (ftStatus != FT_OK) {
+						CMD_LOG("read_byte failed! ftStatus=0x%08x\n", ftStatus);
+						goto exit;
+					}
+
+					if (output != input) {
+						CMD_LOG("ERROR: data mismatch! Please check sk, cs, di, do connection as well as vcc and gnd\n");
+						ftStatus = FT_OTHER_ERROR;
+						goto exit;
+					}
+				}
+				CMD_LOG("  Channel write/read successfully\n\n");
+
+				ftStatus = SPI_CloseChannel(ftHandle);
+				if (ftStatus != FT_OK) {
+					CMD_LOG("SPI_CloseChannel failed!\n");
+					goto exit;
+				}
+				ftHandle = NULL;
+			}
+		}
+
+		if (bFound) {
+			break;
+		}
+	}
+
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+		}
+	}
+
+exit:
+	if (ftHandle != NULL) {
+		SPI_CloseChannel(ftHandle);
+		ftHandle = NULL;
+	}
+	Cleanup_libMPSSE();
+	return (ftStatus == FT_OK);
+}
+
+static bool getInputWithTimeout(int iTimeoutMs)
+{
+	HANDLE stdinHandle = GetStdHandle(STD_INPUT_HANDLE);
+	switch (WaitForSingleObject(stdinHandle, iTimeoutMs)) {
+	case(WAIT_OBJECT_0): {
+		if (_kbhit()) {
+			_getch();
+			return true;
+		}
+		else {
+			// clear events
+			INPUT_RECORD r[512];
+			DWORD read;
+			ReadConsoleInput(stdinHandle, r, 512, &read);
+			break;
+		}
+	}
+	case(WAIT_TIMEOUT):
+	case(WAIT_FAILED):
+	case(WAIT_ABANDONED):
+	default: {
+		break;
+	}
+	}
+
+	return false;
+}
+
+bool FT4232_MPSSE_SPI_IO_EEPROM93LC56B_StressIO()
+{
+	FT_STATUS ftStatus = FT_OK;
+	uint32 ulNumChannels = 0;
+	boolean bFound = false;
+	FT_HANDLE ftHandle = NULL;
+	ChannelConfig config;
+	uint8 addressSlave = 0;
+	uint8 addressStart = 0;
+	uint8 addressEnd = 255;
+	uint32 ulLoopStress = 100;
+
+
+	Init_libMPSSE();
+
+	ftStatus = SPI_GetNumChannels(&ulNumChannels);
+	if (ftStatus != FT_OK) {
+		CMD_LOG("SPI_GetNumChannels failed!\n");
+		goto exit;
+	}
+	if (!ulNumChannels) {
+		CMD_LOG("SPI_GetNumChannels failed! No channels found! ulNumChannels=%d\n", ulNumChannels);
+		ftStatus = FT_DEVICE_NOT_FOUND;
+		goto exit;
+	}
+
+	if (ulNumChannels != 2 && ulNumChannels != 1) {
+		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
+		ftStatus = FT_OTHER_ERROR;
+		goto exit;
+	}
+
+	srand(NULL);
+	for (uint32 i = 0; i < ulNumChannels; i++) {
+		FT_DEVICE_LIST_INFO_NODE devInfo;
+		ftStatus = SPI_GetChannelInfo(i, &devInfo);
+		if (ftStatus != FT_OK) {
+			CMD_LOG("SPI_GetChannelInfo failed!\n");
+			ftStatus = FT_OTHER_ERROR;
+			goto exit;
+		}
+
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
+		CMD_LOG("  Description=%s\n", devInfo.Description);
+
+		if (DeviceNameIsSet()) {
+			if (!DeviceNameCompare(devInfo.Description)) {
+				continue;
+			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
+		}
+
+		ftHandle = NULL;
+		ftStatus = SPI_OpenChannel(i, &ftHandle);
+		if (ftStatus != FT_OK) {
+			CMD_LOG("SPI_OpenChannel failed! Cannot open MPSSE channel\n");
+			goto exit;
+		}
+
+		config.ClockRate = I2C_CLOCK_HIGH_SPEED_MODE;
+		config.LatencyTimer = 255;
+		config.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3;
+		config.Pin = 0;
+
+		ftStatus = SPI_InitChannel(ftHandle, &config);
+		if (ftStatus != FT_OK) {
+			CMD_LOG("SPI_InitChannel failed! Cannot configure MPSSE channel ClockRate=%d LatencyTimer=%d Options=%02d\n",
+				config.ClockRate, config.LatencyTimer, config.configOptions);
+			SPI_CloseChannel(ftHandle);
+			goto exit;
+		}
+
+		for (uint32 loop = 0; loop < ulLoopStress; ++loop) {
+			for (uint8 offset = addressStart; offset < addressEnd; offset++) {
+
+				uint16 input = (uint16)(0xAA55 + rand());
+				CMD_LOG("  writing address = %d data = %d\n", offset, input);
+				ftStatus = write_byte_EEPROM93LC56B(ftHandle, addressSlave, offset, input);
+				if (ftStatus != FT_OK) {
+					CMD_LOG("write_byte failed! ftStatus=0x%08x\n", ftStatus);
+					goto exit;
+				}
+
+				uint16 output = 0;
+				ftStatus = read_byte_EEPROM93LC56B(ftHandle, addressSlave, offset, &output);
+				CMD_LOG("  reading address = %d data = %d\n", offset, output);
+				if (ftStatus != FT_OK) {
+					CMD_LOG("read_byte failed! ftStatus=0x%08x\n", ftStatus);
+					goto exit;
+				}
+
+				if (output != input) {
+					CMD_LOG("ERROR: data mismatch! Please check sk, cs, di, do connection as well as vcc and gnd\n");
+					ftStatus = FT_OTHER_ERROR;
+					goto exit;
+				}
+			}
+			CMD_LOG("  Channel write/read successfully %d. Press any key to abort stress test.\n\n", loop);
+
+			if (getInputWithTimeout(1000)) {
+				CMD_LOG("  A key was pressed. Aborting stress test now!\n\n");
+				break;
 			}
 		}
 
@@ -506,17 +828,34 @@ bool FT4232_MPSSE_SPI_IO_EEPROM93LC56B()
 			CMD_LOG("SPI_CloseChannel failed!\n");
 			goto exit;
 		}
+		ftHandle = NULL;
+
+		if (bFound) {
+			break;
+		}
+	}
+
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+		}
 	}
 
 exit:
+	if (ftHandle != NULL) {
+		SPI_CloseChannel(ftHandle);
+		ftHandle = NULL;
+	}
 	Cleanup_libMPSSE();
 	return (ftStatus == FT_OK);
 }
 
+#if 0
 bool FT4232_MPSSE_SPI_GPIO()
 {
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
+	boolean bFound = false;
 
 
 	Init_libMPSSE();
@@ -547,15 +886,17 @@ bool FT4232_MPSSE_SPI_GPIO()
 			goto exit;
 		}
 
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
+		CMD_LOG("  Description=%s\n", devInfo.Description);
+
 		if (DeviceNameIsSet()) {
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
-
-		CMD_LOG("Dev %d:\n", i);
-		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
-		CMD_LOG("  Description=%s\n", devInfo.Description);
 
 		FT_HANDLE ftHandle = NULL;
 		ftStatus = SPI_OpenChannel(i, &ftHandle);
@@ -608,10 +949,20 @@ bool FT4232_MPSSE_SPI_GPIO()
 			CMD_LOG("SPI_CloseChannel failed!\n");
 			goto exit;
 		}
+
+		if (bFound) {
+			break;
+		}
+	}
+
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+		}
 	}
 
 exit:
 	Cleanup_libMPSSE();
 	return (ftStatus == FT_OK);
 }
-
+#endif

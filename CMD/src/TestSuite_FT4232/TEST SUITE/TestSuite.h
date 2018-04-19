@@ -19,10 +19,13 @@ typedef struct _TEST_CASE
 extern std::string TEST_CONFIG_LOG_FILE_NAME;
 
 extern std::vector<TEST_CASE> TEST_CONFIG_TEST_CASES;
+extern std::vector<TEST_CASE> TEST_CONFIG_TEST_CASES_1;
 extern std::vector<TEST_CASE> TEST_CONFIG_TEST_CASES_2;
 extern std::vector<TEST_CASE> TEST_CONFIG_TEST_CASES_3;
 extern std::vector<TEST_CASE> TEST_CONFIG_TEST_CASES_4;
 extern std::vector<TEST_CASE> TEST_CONFIG_TEST_CASES_5;
+extern std::vector<TEST_CASE> TEST_CONFIG_TEST_CASES_6;
+extern std::vector<TEST_CASE> TEST_CONFIG_TEST_CASES_7;
 
 extern bool TEST_CONFIG_STOPWHENFAIL;
 

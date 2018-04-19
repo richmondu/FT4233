@@ -55,7 +55,7 @@ exit:
 }
 
 static const std::vector<std::string> g_szUsageCommands = 
-	{ "mpsse", "loopback", "fastserial", "jtag", "spiflash" };
+	{ "mpsse", "loopback", "fastserial", "jtag", "spiflash", "spieeprom", "i2ceeprom" };
 
 static void showUsage(const char* pcFilename)
 {
@@ -71,12 +71,14 @@ static void showUsage(const char* pcFilename)
 		ptr = pcFilename;
 	}
 
-	printf("%s -m <MODE> -s <FLAG> -f <FLAG> -l <FILENAME>\n", ptr);
+	printf("%s -m <MODE> -l <FILENAME>\n", ptr);
 	printf("\n");
 
 	printf("Options:\n");
 	printf("  -h --help    \tShow this screen\n");
-	printf("  -m --mode    \t0=MPSSE 1=loopback 2=fastserial 3=JTAG 4=spiflash\n");
+	printf("  -m --mode    \t0=MPSSE 1=loopback 2=fastserial 3=JTAG\n");
+	printf("               \t4=SPIflash 5=SPIeeprom 6=I2Ceeprom\n");
+	printf("  -e --enum    \tEnumerate FTDI devices/channels/ports connected\n");
 	printf("  -d --device  \tPerform test on specified device/channel/port only\n");
 	printf("  -b --bufsize \tSet size of buffer for loopback test\n");
 	printf("  -s --stress  \tPerform the test cases repeatedly\n");
@@ -85,9 +87,10 @@ static void showUsage(const char* pcFilename)
 	printf("\n");
 
 	printf("Examples:\n");
+	printf("  %s --enum\n", ptr);
 	for (unsigned int j = 0; j < g_szUsageCommands.size(); j++) {
-		printf("  %s --mode %d\n", ptr, j);
 		if (j == 0) {
+			printf("  %s --mode %d\n", ptr, j);
 			printf("  %s --mode %d --failstop 0\n", ptr, j);
 			printf("  %s --mode %d --stress 1\n", ptr, j);
 			printf("  %s --mode %d --stress 1 --failstop 0\n", ptr, j);
@@ -99,16 +102,13 @@ static void showUsage(const char* pcFilename)
 		else if (j == 2) {
 			printf("  %s --mode %d --logfile TestSuite_FT4232.log\n", ptr, j);
 		}
-		else if (j == 3) {
-			printf("  %s --mode %d --device \"UMFTPD2A A\"\n", ptr, j);
-		}
-		else if (j == 4) {
+		else if (j >= 3 && j <= 6) {
 			printf("  %s --mode %d --device \"UMFTPD2A A\"\n", ptr, j);
 		}
 	}
 	for (unsigned int j = 0; j < g_szUsageCommands.size(); j++) {
-		printf("  %s -m %s\n", ptr, g_szUsageCommands[j].c_str());
 		if (j == 0) {
+			printf("  %s -m %s\n", ptr, g_szUsageCommands[j].c_str());
 			printf("  %s -m %s -f 0\n", ptr, g_szUsageCommands[j].c_str());
 			printf("  %s -m %s -s 1 \n", ptr, g_szUsageCommands[j].c_str());
 			printf("  %s -m %s -s 1 -f 0\n", ptr, g_szUsageCommands[j].c_str());
@@ -120,10 +120,7 @@ static void showUsage(const char* pcFilename)
 		else if (j == 2) {
 			printf("  %s -m %s -l TestSuite_FT4232.log\n", ptr, g_szUsageCommands[j].c_str());
 		}
-		else if (j == 3) {
-			printf("  %s -m %s -d \"UMFTPD2A A\"\n", ptr, g_szUsageCommands[j].c_str());
-		}
-		else if (j == 4) {
+		else if (j >= 3 && j <= 6) {
 			printf("  %s -m %s -d \"UMFTPD2A A\"\n", ptr, g_szUsageCommands[j].c_str());
 		}
 	}
@@ -134,7 +131,7 @@ static void showUsage(const char* pcFilename)
 
 int main(int argc, char* argv[])
 {
-	std::vector<TEST_CASE> testCases = TEST_CONFIG_TEST_CASES;
+	std::vector<TEST_CASE> testCases = TEST_CONFIG_TEST_CASES_1;
 	bool bFailThenStop = TEST_CONFIG_STOPWHENFAIL;
 	bool bStressTest = TEST_CONFIG_STRESSTEST;
 	std::string szConfigFileName = TEST_CONFIG_LOG_FILE_NAME;
@@ -172,6 +169,12 @@ int main(int argc, char* argv[])
 				else if (val == "4" || val == g_szUsageCommands[4]) {
 					testCases = TEST_CONFIG_TEST_CASES_5;
 				}
+				else if (val == "5" || val == g_szUsageCommands[5]) {
+					testCases = TEST_CONFIG_TEST_CASES_6;
+				}
+				else if (val == "6" || val == g_szUsageCommands[6]) {
+					testCases = TEST_CONFIG_TEST_CASES_7;
+				}
 			}
 			else if (option == "-f" || option == "--failstop") {
 				std::string val = *++i;
@@ -193,6 +196,9 @@ int main(int argc, char* argv[])
 			}
 			else if (option == "-l" || option == "--logfile") {
 				szConfigFileName = *++i;
+			}
+			else if (option == "-e" || option == "--enum") {
+				testCases = TEST_CONFIG_TEST_CASES_1;
 			}
 			else if (option == "-d" || option == "--device") {
 				std::string szDeviceName = *++i;
