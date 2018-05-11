@@ -463,6 +463,26 @@ static FT_STATUS readIR(FT_HANDLE ftHandle, BYTE* byteIRdefault, BYTE* byteBypas
 	return ftStatus;
 }
 
+static void waitForReenumeration() 
+{
+	CMD_LOG("Recycling of device port\n");
+	FT_STATUS ftStatus = FT_OK;
+	for (int i=0; i<10; i++) {
+		Sleep(500);
+		CMD_LOG(".");
+	}
+	DWORD dwNumDevices = 0;
+	while (1) {
+		CMD_LOG(".");
+		ftStatus = FT_ListDevices(&dwNumDevices, NULL, FT_LIST_NUMBER_ONLY);
+		if (ftStatus == FT_OK && dwNumDevices == 0) {
+			continue;
+		}
+		break;
+	}
+	CMD_LOG(".\n");
+}
+
 bool FT4232_D2XX_JTAG_TISN74BCT8244A() 
 {
 	FT_STATUS ftStatus = 0;
@@ -567,8 +587,10 @@ bool FT4232_D2XX_JTAG_TISN74BCT8244A()
 			//goto exit;
 		}
 
+		//FT_CyclePort(ftHandle);
 		FT_Close(ftHandle);
 		ftHandle = NULL;
+		//waitForReenumeration();
 
 		if (bFound) {
 			break;
@@ -585,8 +607,10 @@ bool FT4232_D2XX_JTAG_TISN74BCT8244A()
 
 exit:
 	if (ftHandle != NULL) {
+		//FT_CyclePort(ftHandle);
 		FT_Close(ftHandle);
 		ftHandle = NULL;
+		//waitForReenumeration();
 	}
 	return (ftStatus == FT_OK);
 }

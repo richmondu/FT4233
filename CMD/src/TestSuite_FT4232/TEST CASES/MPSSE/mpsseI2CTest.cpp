@@ -42,11 +42,6 @@ bool FT4232_MPSSE_I2C_Enumerate()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("I2C_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
 
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
@@ -106,12 +101,6 @@ bool FT4232_MPSSE_I2C_Open()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("I2C_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = I2C_GetChannelInfo(i, &devInfo);
@@ -167,12 +156,6 @@ bool FT4232_MPSSE_I2C_Configure()
 	if (!ulNumChannels) {
 		CMD_LOG("I2C_GetNumChannels failed! No channels found! ulNumChannels=%d\n", ulNumChannels);
 		ftStatus = FT_DEVICE_NOT_FOUND;
-		goto exit;
-	}
-
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("I2C_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
 		goto exit;
 	}
 
@@ -312,6 +295,12 @@ static FT_STATUS read_byte_EEPROM24LC024H(FT_HANDLE ftHandle, uint8 slaveAddress
 	return ftStatus;
 }
 
+#if 1 // new board
+#define ADDRESS_EEPROM24LC024H 0x50 // 1010000
+#else
+#define ADDRESS_EEPROM24LC024H 0x57 // 1010111
+#endif
+
 // FT4232_MPSSE_I2C_IO_EEPROM24LC024H test uses Microchip's 24LC024H EEPROM 
 //   This is the same EEPROM used in MPSSE I2C Example at 
 //   http://www.ftdichip.com/Support/SoftwareExamples/MPSSE/LibMPSSE-I2C/LibMPSSE-I2C_source.zip
@@ -324,8 +313,8 @@ bool FT4232_MPSSE_I2C_IO_EEPROM24LC024H_BasicIO()
 	uint32 ulNumChannels = 0;
 	boolean bFound = false;
 	FT_HANDLE ftHandle = NULL;
-	uint8 addressWrite = 0x57;
-	uint8 addressRead = 0x57;
+	uint8 addressWrite = ADDRESS_EEPROM24LC024H;
+	uint8 addressRead = ADDRESS_EEPROM24LC024H;
 	uint8 addressStart = 0;
 	uint8 addressEnd = 32;
 
@@ -340,12 +329,6 @@ bool FT4232_MPSSE_I2C_IO_EEPROM24LC024H_BasicIO()
 	if (!ulNumChannels) {
 		CMD_LOG("I2C_GetNumChannels failed! No channels found! ulNumChannels=%d\n", ulNumChannels);
 		ftStatus = FT_DEVICE_NOT_FOUND;
-		goto exit;
-	}
-
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("I2C_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
 		goto exit;
 	}
 
@@ -454,8 +437,8 @@ bool FT4232_MPSSE_I2C_IO_EEPROM24LC024H_ClockedIO()
 	FT_HANDLE ftHandle = NULL;
 	FT_DEVICE_LIST_INFO_NODE devInfo;
 	ChannelConfig config;
-	uint8 addressWrite = 0x57;
-	uint8 addressRead = 0x57;
+	uint8 addressWrite = ADDRESS_EEPROM24LC024H;
+	uint8 addressRead = ADDRESS_EEPROM24LC024H;
 	uint8 addressStart = 0;
 	uint8 addressEnd = 64;
 	const I2C_CLOCKRATE ClockRate[] = {
@@ -477,12 +460,6 @@ bool FT4232_MPSSE_I2C_IO_EEPROM24LC024H_ClockedIO()
 	if (!ulNumChannels) {
 		CMD_LOG("I2C_GetNumChannels failed! No channels found! ulNumChannels=%d\n", ulNumChannels);
 		ftStatus = FT_DEVICE_NOT_FOUND;
-		goto exit;
-	}
-
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("I2C_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
 		goto exit;
 	}
 
@@ -621,8 +598,8 @@ bool FT4232_MPSSE_I2C_IO_EEPROM24LC024H_StressIO()
 	uint32 ulNumChannels = 0;
 	boolean bFound = false;
 	FT_HANDLE ftHandle = NULL;
-	uint8 addressWrite = 0x57;
-	uint8 addressRead = 0x57;
+	uint8 addressWrite = ADDRESS_EEPROM24LC024H;
+	uint8 addressRead = ADDRESS_EEPROM24LC024H;
 	uint8 addressStart = 0;
 	uint8 addressEnd = 255;
 	uint32 ulLoopStress = 100;
@@ -638,12 +615,6 @@ bool FT4232_MPSSE_I2C_IO_EEPROM24LC024H_StressIO()
 	if (!ulNumChannels) {
 		CMD_LOG("I2C_GetNumChannels failed! No channels found! ulNumChannels=%d\n", ulNumChannels);
 		ftStatus = FT_DEVICE_NOT_FOUND;
-		goto exit;
-	}
-
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("I2C_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
 		goto exit;
 	}
 
@@ -689,8 +660,8 @@ bool FT4232_MPSSE_I2C_IO_EEPROM24LC024H_StressIO()
 		}
 
 		for (uint32 loop = 0; loop < ulLoopStress; ++loop) {
-			for (uint8 offset = addressStart; offset < addressEnd; offset++)
-			{
+			for (uint8 offset = addressStart; offset < addressEnd; offset++) {
+
 				uint8 input = (uint8)(0xAA + rand());
 				CMD_LOG("  writing address = %d data = %d\n", offset, input);
 				ftStatus = write_byte_EEPROM24LC024H(ftHandle, addressWrite, offset, input);

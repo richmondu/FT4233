@@ -131,7 +131,7 @@ static void showUsage(const char* pcFilename)
 
 int main(int argc, char* argv[])
 {
-	std::vector<TEST_CASE> testCases = TEST_CONFIG_TEST_CASES_1;
+	std::vector<TEST_CASE> testCases = TEST_CONFIG_TEST_CASES_4;// TEST_CONFIG_TEST_CASES_1;
 	bool bFailThenStop = TEST_CONFIG_STOPWHENFAIL;
 	bool bStressTest = TEST_CONFIG_STRESSTEST;
 	std::string szConfigFileName = TEST_CONFIG_LOG_FILE_NAME;

@@ -42,12 +42,6 @@ bool FT4232_MPSSE_SPI_Enumerate()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -107,12 +101,6 @@ bool FT4232_MPSSE_SPI_Open()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -167,12 +155,6 @@ bool FT4232_MPSSE_SPI_Configure()
 	if (!ulNumChannels) {
 		CMD_LOG("SPI_GetNumChannels failed! No channels found! ulNumChannels=%d\n", ulNumChannels);
 		ftStatus = FT_DEVICE_NOT_FOUND;
-		goto exit;
-	}
-
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
 		goto exit;
 	}
 
@@ -446,12 +428,6 @@ bool FT4232_MPSSE_SPI_IO_EEPROM93LC56B_BasicIO()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	srand(NULL);
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
@@ -576,12 +552,6 @@ bool FT4232_MPSSE_SPI_IO_EEPROM93LC56B_ClockedIO()
 	if (!ulNumChannels) {
 		CMD_LOG("SPI_GetNumChannels failed! No channels found! ulNumChannels=%d\n", ulNumChannels);
 		ftStatus = FT_DEVICE_NOT_FOUND;
-		goto exit;
-	}
-
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
 		goto exit;
 	}
 
@@ -739,12 +709,6 @@ bool FT4232_MPSSE_SPI_IO_EEPROM93LC56B_StressIO()
 	if (!ulNumChannels) {
 		CMD_LOG("SPI_GetNumChannels failed! No channels found! ulNumChannels=%d\n", ulNumChannels);
 		ftStatus = FT_DEVICE_NOT_FOUND;
-		goto exit;
-	}
-
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
 		goto exit;
 	}
 

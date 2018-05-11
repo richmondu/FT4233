@@ -141,8 +141,8 @@ bool FT4232_MPSSE_JTAG_TISN74BCT8244A()
 		}
 
 		CMD_LOG("Dev %d:\n", i);
-		CMD_LOG("  LocId=%d\n", LocId);
-		CMD_LOG("  Type=%d\n", Type);
+		CMD_LOG("  LocId=0x%08x\n", LocId);
+		CMD_LOG("  Type=0x%08x\n", Type);
 		CMD_LOG("  Channel=%s\n", Channel);
 		CMD_LOG("  Description=%s\n", Description);
 
@@ -173,8 +173,9 @@ bool FT4232_MPSSE_JTAG_TISN74BCT8244A()
 		}
 
 		// TODO: Check if clock divisor is correct
-		// DWORD dwClockDivisor = 0x05DB; // Value of clock divisor, SCL Frequency = 60/((1+0x05DB)*2) (MHz) = 20khz
-		DWORD dwClockDivisor = 0x012B; // Value of clock divisor, SCL Frequency = 12/((1+0x012B)*2) (MHz) = 20khz
+		DWORD dwClockDivisor = 0x05DB; // Value of clock divisor, SCL Frequency = 60/((1+0x05DB)*2) (MHz) = 20khz
+		//DWORD dwClockDivisor = 0x012B; // Value of clock divisor, SCL Frequency = 12/((1+0x012B)*2) (MHz) = 20khz
+		CMD_LOG("JTAG_InitDevice dwClockDivisor=%08x\n", dwClockDivisor);
 		ftStatus = JTAG_InitDevice(ftHandle, dwClockDivisor);
 		if (ftStatus != FTC_SUCCESS) {
 			CMD_LOG("JTAG_InitDevice failed! ftStatus=0x%08x\n", ftStatus);
@@ -285,13 +286,13 @@ static FT_STATUS readIR2(FTC_HANDLE ftHandle, BYTE* byteIRdefault, BYTE* byteByp
 		CMD_LOG("readIR JTAG_Write failed! 0xFF to ShiftIR then go to RTI! ftStatus=0x%08x\n", ftStatus);
 		return ftStatus;
 	}
-	CMD_LOG("readIR: ShiftIR TDI 11111111 expecting TDO 10000001! dwNumBytesReturned=%d\n", dwNumBytesReturned);
+	CMD_LOG("  readIR: ShiftIR TDI 11111111 expecting TDO 10000001! dwNumBytesReturned=%d\n", dwNumBytesReturned);
 	if (dwNumBytesReturned == 1) {
-		CMD_LOG("readIR: buf[0]=0x%02x\n", oReadBuf[0]);
+		CMD_LOG("  readIR: buf[0]=0x%02x\n", oReadBuf[0]);
 		*byteIRdefault = oReadBuf[0];
 	}
 	else if (dwNumBytesReturned == 2) {
-		CMD_LOG("readIR: buf[0]=0x%02x buf[1]=0x%02x\n", oReadBuf[0], oReadBuf[1]);
+		CMD_LOG("  readIR: buf[0]=0x%02x buf[1]=0x%02x\n", oReadBuf[0], oReadBuf[1]);
 		*byteIRdefault = oReadBuf[1];
 	}
 
@@ -311,14 +312,14 @@ static FT_STATUS readIR2(FTC_HANDLE ftHandle, BYTE* byteIRdefault, BYTE* byteByp
 		CMD_LOG("readIR JTAG_Write failed! 0x5 to ShiftDR then go to TLS! ftStatus=0x%08x\n", ftStatus);
 		return ftStatus;
 	}
-	CMD_LOG("readIR: ShiftDR TDI 101 expecting TDO 010! dwNumBytesReturned=%d\n", dwNumBytesReturned);
+	CMD_LOG("  readIR: ShiftDR TDI 101 expecting TDO 010! dwNumBytesReturned=%d\n", dwNumBytesReturned);
 	if (dwNumBytesReturned == 1) {
-		CMD_LOG("readIR: buf[0]=0x%02x\n", oReadBuf[0]);
-		*byteBypass = oReadBuf[0] >> 5;
+		CMD_LOG("  readIR: buf[0]=0x%02x\n", oReadBuf[0]);
+		*byteBypass = oReadBuf[0];// >> 5;
 	}
 	else if (dwNumBytesReturned == 2) {
-		CMD_LOG("readIR: buf[0]=0x%02x buf[1]=0x%02x\n", oReadBuf[0], oReadBuf[1]);
-		*byteBypass = oReadBuf[1] >> 5;
+		CMD_LOG("  readIR: buf[0]=0x%02x buf[1]=0x%02x\n", oReadBuf[0], oReadBuf[1]);
+		*byteBypass = oReadBuf[1];// >> 5;
 	}
 
 #if 0
@@ -390,8 +391,8 @@ bool FT4232_MPSSE_JTAG_TISN74BCT8244A_2()
 		}
 		CMD_LOG("\n");
 		CMD_LOG("Dev %d:\n", i);
-		CMD_LOG("  LocId=%d\n", LocId);
-		CMD_LOG("  Type=%d\n", Type);
+		CMD_LOG("  LocId=0x%08x\n", LocId);
+		CMD_LOG("  Type=0x%08x\n", Type);
 		CMD_LOG("  Channel=%s\n", Channel);
 		CMD_LOG("  Description=%s\n", Description);
 
@@ -422,8 +423,9 @@ bool FT4232_MPSSE_JTAG_TISN74BCT8244A_2()
 		}
 
 		// TODO: Check if clock divisor is correct
-		// DWORD dwClockDivisor = 0x05DB; // Value of clock divisor, SCL Frequency = 60/((1+0x05DB)*2) (MHz) = 20khz
-		DWORD dwClockDivisor = 0x012B; // Value of clock divisor, SCL Frequency = 12/((1+0x012B)*2) (MHz) = 20khz
+		DWORD dwClockDivisor = 0x05DB; // Value of clock divisor, SCL Frequency = 60/((1+0x05DB)*2) (MHz) = 20khz
+		// DWORD dwClockDivisor = 0x012B; // Value of clock divisor, SCL Frequency = 12/((1+0x012B)*2) (MHz) = 20khz
+		CMD_LOG("JTAG_InitDevice dwClockDivisor=%08x\n", dwClockDivisor);
 		ftStatus = JTAG_InitDevice(ftHandle, dwClockDivisor);
 		if (ftStatus != FTC_SUCCESS) {
 			CMD_LOG("JTAG_InitDevice failed! ftStatus=0x%08x\n", ftStatus);
@@ -473,4 +475,144 @@ exit:
 	}
 	return (ftStatus == FTC_SUCCESS);
 }
+
+bool FT4232_MPSSE_JTAG_TISN74BCT8244A_3()
+{
+	FTC_STATUS ftStatus = FTC_SUCCESS;
+	FTC_HANDLE ftHandle = NULL;
+	BYTE byteIRdefault = 0;
+	BYTE byteBypass = 0;
+	DWORD dwNumDevices = 0;
+	bool bFound = false;
+	bool bHiSpeed = true;
+
+
+	ftStatus = JTAG_GetNumHiSpeedDevices(&dwNumDevices);
+	if (ftStatus != FTC_SUCCESS) {
+		CMD_LOG("JTAG_GetNumHiSpeedDevices failed! ftStatus=0x%08x\n", ftStatus);
+		return ftStatus;
+	}
+	CMD_LOG("DeviceCount=%d\n", dwNumDevices);
+	if (!dwNumDevices) {
+		ftStatus = JTAG_GetNumDevices(&dwNumDevices);
+		if (ftStatus != FTC_SUCCESS) {
+			CMD_LOG("JTAG_GetNumDevices failed! ftStatus=0x%08x\n", ftStatus);
+			return ftStatus;
+		}
+		if (!dwNumDevices) {
+			CMD_LOG("JTAG_GetNumHiSpeedDevices and JTAG_GetNumDevices failed! No devices found!\n");
+			return false;
+		}
+		bHiSpeed = false;
+	}
+	CMD_LOG("\n");
+
+	for (DWORD i = 0; i<dwNumDevices; i++) {
+
+		CHAR Description[32] = { 0 };
+		CHAR Channel[32] = { 0 };
+		DWORD LocId = 0;
+		DWORD Type = 0;
+
+		if (bHiSpeed) {
+			ftStatus = JTAG_GetHiSpeedDeviceNameLocIDChannel(i, Description, sizeof(Description), &LocId, Channel, sizeof(Channel), &Type);
+			if (ftStatus != FTC_SUCCESS) {
+				CMD_LOG("JTAG_GetHiSpeedDeviceNameLocIDChannel failed! ftStatus=0x%08x\n", ftStatus);
+				return ftStatus;
+			}
+		}
+		else {
+			ftStatus = JTAG_GetDeviceNameLocID(i, Description, sizeof(Description), &LocId);
+			if (ftStatus != FTC_SUCCESS) {
+				CMD_LOG("JTAG_GetDeviceNameLocID failed! ftStatus=0x%08x\n", ftStatus);
+				return ftStatus;
+			}
+		}
+		CMD_LOG("\n");
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  LocId=0x%08x\n", LocId);
+		CMD_LOG("  Type=0x%08x\n", Type);
+		CMD_LOG("  Channel=%s\n", Channel);
+		CMD_LOG("  Description=%s\n", Description);
+
+		if (DeviceNameIsSet()) {
+			if (!DeviceNameCompare(Description)) {
+				continue;
+			}
+			else {
+				CMD_LOG("  Specified device is found!\n");
+				bFound = true;
+			}
+		}
+		CMD_LOG("\n");
+
+		if (bHiSpeed) {
+			ftStatus = JTAG_OpenHiSpeedDevice(Description, LocId, Channel, &ftHandle);
+			if (ftStatus != FTC_SUCCESS) {
+				CMD_LOG("JTAG_OpenHiSpeedDevice failed! ftStatus=0x%08x\n", ftStatus);
+				return ftStatus;
+			}
+		}
+		else {
+			ftStatus = JTAG_OpenEx(Description, LocId, &ftHandle);
+			if (ftStatus != FTC_SUCCESS) {
+				CMD_LOG("JTAG_OpenEx failed! ftStatus=0x%08x\n", ftStatus);
+				return ftStatus;
+			}
+		}
+
+		// TODO: Check if clock divisor is correct
+		//DWORD dwClockDivisor = 0x05DB; // Value of clock divisor, SCL Frequency = 60/((1+0x05DB)*2) (MHz) = 20khz
+		DWORD dwClockDivisor = 0x012B; // Value of clock divisor, SCL Frequency = 12/((1+0x012B)*2) (MHz) = 20khz
+		CMD_LOG("JTAG_InitDevice dwClockDivisor=%08x\n", dwClockDivisor);
+		ftStatus = JTAG_InitDevice(ftHandle, dwClockDivisor);
+		if (ftStatus != FTC_SUCCESS) {
+			CMD_LOG("JTAG_InitDevice failed! ftStatus=0x%08x\n", ftStatus);
+			goto exit;
+		}
+
+		CMD_LOG("Reading IR and bypass register...\n");
+		ftStatus = readIR2(ftHandle, &byteIRdefault, &byteBypass);
+		if (ftStatus != FT_OK) {
+			CMD_LOG("Reading IR and bypass register failed with error 0x%08x\n", ftStatus);
+			goto exit;
+		}
+
+		CMD_LOG("\n");
+		CMD_LOG("TI SN74BCT8244A\n");
+		CMD_LOG("Expected IR Default value is 0x%02x. The scanned value is 0x%02x.\n", TISN74BCT8244A_IRDEFAULT, byteIRdefault);
+		CMD_LOG("Expected BYPASS value is 0x%02x. The scanned value is 0x%02x.\n", TISN74BCT8244A_BYPASS, byteBypass);
+		CMD_LOG("\n");
+		if (byteIRdefault != TISN74BCT8244A_IRDEFAULT ||
+			byteBypass != TISN74BCT8244A_BYPASS) {
+			CMD_LOG("Error detected! Incorrect scanned values! Please check connection setup.\n");
+			CMD_LOG("\n");
+			ftStatus = FT_OTHER_ERROR;
+			//goto exit;
+		}
+
+		JTAG_Close(ftHandle);
+		ftHandle = NULL;
+
+		if (bFound) {
+			break;
+		}
+	}
+	CMD_LOG("\n");
+
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found!\n");
+			ftStatus = FT_OTHER_ERROR;
+		}
+	}
+
+exit:
+	if (ftHandle != NULL) {
+		JTAG_Close(ftHandle);
+		ftHandle = NULL;
+	}
+	return (ftStatus == FTC_SUCCESS);
+}
+
 

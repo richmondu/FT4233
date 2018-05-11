@@ -319,6 +319,180 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
     	btnClear.setEnabled(bEnable);
 	}	
 	
+	private StringBuilder SetParameters(StringBuilder dev1, StringBuilder dev2, StringBuilder size) {
+		if (radioEnum.isSelected()) {
+			dev1.append(txtDev1.getText());
+			dev2.append("");
+			size.append("0");
+			return null;
+		}
+		else if (radioLoopback.isSelected()) {
+			dev1.append(txtDev1.getText());
+			dev2.append(txtDev2.getText());
+			size.append(txtSize.getText());
+			return new StringBuilder("loopback");
+		}
+		else if (radioMPSSE.isSelected()) {
+			dev1.append(txtDev1.getText());
+			dev2.append("");
+			size.append("0");
+			return new StringBuilder("mpsse");
+		}
+		else if (radioFastSerial.isSelected()) {
+			dev1.append(txtDev1.getText());
+			dev2.append("");
+			size.append("0");
+			return new StringBuilder("fastserial");
+		}
+		else if (radioJTAG.isSelected()) {
+			dev1.append(txtDev1.getText());
+			dev2.append("");
+			size.append("0");
+			return new StringBuilder("jtag");
+		}
+		else if (radioSpiFlash.isSelected()) {
+			dev1.append(txtDev1.getText());
+			dev2.append("");
+			size.append("0");
+			return new StringBuilder("spiflash");
+		}
+		else if (radioSpiEeprom.isSelected()) {
+			dev1.append(txtDev1.getText());
+			dev2.append("");
+			size.append("0");
+			return new StringBuilder("spieeprom");
+		}
+		else if (radioI2cEeprom.isSelected()) {
+			dev1.append(txtDev1.getText());
+			dev2.append("");
+			size.append("0");
+			return new StringBuilder("i2ceeprom");
+		}		
+		return null;
+	}
+	
+	private void actionPerformedBtnRun() {
+    	class RunnableEx implements Runnable {
+    		
+    		private String mode;
+    		private String path;
+    		private String dev1;
+    		private String dev2;
+    		private String size;
+    		
+    		RunnableEx(String path, String mode, String dev1, String dev2, String size) {
+    			if (mode == null) {
+    				this.mode = mode;
+    			}
+    			else {
+    				this.mode = new String(mode);
+    			}
+    			this.path = new String(path);
+    			this.dev1 = new String(dev1);
+    			this.dev2 = new String(dev2);
+    			this.size = new String(size);
+    		}
+    		
+			@Override
+			public void run() {
+        		try {
+                	String[] cmd = null;
+                	if (this.mode == null) {
+                		cmd = new String[]{this.path, "-e"};
+                	}
+                	else {
+                		if (this.dev1.length() != 0 && this.dev2.length() != 0) {
+                			cmd = new String[]{this.path, "-m", this.mode, "-d", this.dev1, "-d", this.dev2, "-b", this.size};
+                		}
+                		else if (this.dev1.length() != 0) {
+                			cmd = new String[]{this.path, "-m", this.mode, "-d", this.dev1};
+                		}
+                		else {
+                			cmd = new String[]{this.path, "-m", this.mode};
+                		}
+                	}
+
+                	Process p;
+                	try {
+            			//p = Runtime.getRuntime().exec(cmd);
+                		p = (new ProcessBuilder(cmd)).start();
+                	}
+                	catch (Exception x) {
+                		textArea.append("\nThe executable file could not be found!\n" );
+                		p = null;
+                		enableControls(true);
+                		return;
+                	}
+                	
+        			String line;
+        			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+        			
+        			while ((line = reader.readLine()) != null) {
+        				class RunnableEx2 implements Runnable {
+        					private String line;
+        					RunnableEx2(String line) {
+        						this.line = line;
+        					}
+							@Override
+							public void run() {
+								System.out.printf("%s\n", line);
+								textArea.append(this.line);
+								textArea.append("\n");
+                				textArea.setCaretPosition(textArea.getDocument().getLength());
+                				textArea.update(textArea.getGraphics());
+							}								
+        			    };
+        				SwingUtilities.invokeLater(new RunnableEx2(line));
+        			}
+        			p.waitFor();
+        			p = null;
+        			
+        			enableControls(true);
+        		} 
+        		catch (Exception x) {
+        			x.printStackTrace();
+        		}
+			}
+		};
+		
+		StringBuilder dev1 = new StringBuilder("");
+		StringBuilder dev2 = new StringBuilder("");
+		StringBuilder size = new StringBuilder("");
+		StringBuilder mode = SetParameters(dev1, dev2, size);;
+    	(new Thread(new RunnableEx(path.toString(), mode!= null ? mode.toString() : null, dev1.toString(), dev2.toString(), size.toString()))).start();
+	}
+	
+	private void actionPerformedBtnStop() {
+    	class RunnableEx implements Runnable {
+    		@Override
+			public void run() {
+            	String[] cmd = new String[] 
+            		{"taskkill.exe", "/im", "TestSuite_FT4232.exe", "/f", "/t"};
+				try {
+					Process p = (new ProcessBuilder(cmd)).start();
+                	p.waitFor();
+                	textArea.append("\n\nThe test has been aborted successfully!\n");
+				} catch (IOException e) {
+					e.printStackTrace();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+    		}
+    	};
+    	(new Thread(new RunnableEx())).start();
+	}
+	
+	public void actionPerformed(ActionEvent e) {
+		if (e.getSource() == btnRun) {
+			enableControls(false);
+			actionPerformedBtnRun();
+		}
+		else if (e.getSource() == btnStop) {
+			enableControls(true);
+			actionPerformedBtnStop();
+		}
+	}
+	
 	private void initUI() {
 	    
 	    setTitle("Test Suite");
@@ -328,170 +502,7 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 	    setVisible(true);
 	    setResizable(false);
 	    getContentPane().setLayout(null);
-	}
- 
-	public void actionPerformed(ActionEvent e) {
-		if (e.getSource() == btnRun) {
-			
-			enableControls(false);
-	      	
-        	class RunnableEx2 implements Runnable {
-        		
-        		private String mode;
-        		private String path;
-        		private String dev1;
-        		private String dev2;
-        		private String size;
-        		
-        		RunnableEx2(String path, String mode, String dev1, String dev2, String size) {
-        			if (mode == null) {
-        				this.mode = mode;
-        			}
-        			else {
-        				this.mode = new String(mode);
-        			}
-        			this.path = new String(path);
-        			this.dev1 = new String(dev1);
-        			this.dev2 = new String(dev2);
-        			this.size = new String(size);
-        		}
-        		
-    			@Override
-    			public void run() {
-            		try {
-                    	String[] cmd = null;
-                    	if (this.mode == null) {
-                    		cmd = new String[]{this.path, "-e"};
-                    	}
-                    	else {
-                    		if (this.dev1.length() != 0 && this.dev2.length() != 0) {
-                    			cmd = new String[]{this.path, "-m", this.mode, "-d", this.dev1, "-d", this.dev2, "-b", this.size};
-                    		}
-                    		else if (this.dev1.length() != 0) {
-                    			cmd = new String[]{this.path, "-m", this.mode, "-d", this.dev1};
-                    		}
-                    		else {
-                    			cmd = new String[]{this.path, "-m", this.mode};
-                    		}
-                    	}
-
-                    	Process p;
-                    	try {
-                			//p = Runtime.getRuntime().exec(cmd);
-                    		p = (new ProcessBuilder(cmd)).start();
-                    	}
-                    	catch (Exception x) {
-                    		textArea.append("\nThe executable file could not be found!\n" );
-                    		p = null;
-                    		enableControls(true);
-                    		return;
-                    	}
-                    	
-            			String line;
-            			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            			
-            			while ((line = reader.readLine()) != null) {
-            				class RunnableEx implements Runnable {
-            					private String line;
-            					RunnableEx(String line) {
-            						this.line = line;
-            					}
-								@Override
-								public void run() {
-									System.out.printf("%s\n", line);
-									textArea.append(this.line);
-									textArea.append("\n");
-	                				textArea.setCaretPosition(textArea.getDocument().getLength());
-	                				textArea.update(textArea.getGraphics());
-								}								
-            			    };
-            				SwingUtilities.invokeLater(new RunnableEx(line));
-            			}
-            			p.waitFor();
-            			p = null;
-            			
-            			enableControls(true);
-            		} 
-            		catch (Exception x) {
-            			x.printStackTrace();
-            		}
-    			}
-    		};
-    		
-    		String mode = null;
-    		String dev1 = null;
-    		String dev2 = null;
-    		String size = null;
-    		if (radioEnum.isSelected()) {
-    			dev1 = new String(txtDev1.getText());
-    			dev2 = new String("");
-    			size = new String("0");
-    		}
-    		else if (radioLoopback.isSelected()) {
-    			mode = new String("loopback");
-    			dev1 = new String(txtDev1.getText());
-    			dev2 = new String(txtDev2.getText());
-    			size = new String(txtSize.getText());
-    		}
-    		else if (radioMPSSE.isSelected()) {
-    			mode = new String("mpsse");
-    			dev1 = new String(txtDev1.getText());
-    			dev2 = new String("");
-    			size = new String("0");
-    		}
-    		else if (radioFastSerial.isSelected()) {
-    			mode = new String("fastserial");
-    			dev1 = new String(txtDev1.getText());
-    			dev2 = new String("");
-    			size = new String("0");
-    		}
-    		else if (radioJTAG.isSelected()) {
-    			mode = new String("jtag");
-    			dev1 = new String(txtDev1.getText());
-    			dev2 = new String("");
-    			size = new String("0");
-    		}
-    		else if (radioSpiFlash.isSelected()) {
-    			mode = new String("spiflash");
-    			dev1 = new String(txtDev1.getText());
-    			dev2 = new String("");
-    			size = new String("0");
-    		}
-    		else if (radioSpiEeprom.isSelected()) {
-    			mode = new String("spieeprom");
-    			dev1 = new String(txtDev1.getText());
-    			dev2 = new String("");
-    			size = new String("0");
-    		}
-    		else if (radioI2cEeprom.isSelected()) {
-    			mode = new String("i2ceeprom");
-    			dev1 = new String(txtDev1.getText());
-    			dev2 = new String("");
-    			size = new String("0");
-    		}
-        	(new Thread(new RunnableEx2(path, mode, dev1, dev2, size))).start();
-		}
-		else if (e.getSource() == btnStop) {
-			enableControls(true);
-        	class RunnableEx3 implements Runnable {
-        		@Override
-    			public void run() {
-                	String[] cmd = new String[] 
-                		{"taskkill.exe", "/im", "TestSuite_FT4232.exe", "/f", "/t"};
-					try {
-						Process p = (new ProcessBuilder(cmd)).start();
-                    	p.waitFor();
-                    	textArea.append("\n\nThe test has been aborted successfully!\n");
-					} catch (IOException e) {
-						e.printStackTrace();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-        		}
-        	};
-        	(new Thread(new RunnableEx3())).start();
-		}
-	}
+	}	
 	
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(new Runnable() {

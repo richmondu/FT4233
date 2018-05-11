@@ -28,12 +28,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Enumerate()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -63,8 +57,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Enumerate()
 		if (!bFound) {
 			CMD_LOG("Specified device is NOT found!\n");
 			DeviceNameNotFoundAbort();
-			Cleanup_libMPSSE();
-			return false;
+			ftStatus = FT_OTHER_ERROR;
 		}
 	}
 
@@ -78,6 +71,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Open()
 {
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
+	boolean bFound = false;
 
 
 	Init_libMPSSE();
@@ -93,12 +87,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Open()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -108,15 +96,17 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Open()
 			goto exit;
 		}
 
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
+		CMD_LOG("  Description=%s\n", devInfo.Description);
+
 		if (DeviceNameIsSet()) {
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
-
-		CMD_LOG("Dev %d:\n", i);
-		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
-		CMD_LOG("  Description=%s\n", devInfo.Description);
 
 		FT_HANDLE ftHandle = NULL;
 		ftStatus = SPI_OpenChannel(i, &ftHandle);
@@ -131,6 +121,17 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Open()
 			CMD_LOG("SPI_CloseChannel failed!\n");
 			goto exit;
 		}
+
+		if (bFound) {
+			break;
+		}
+	}
+
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found!\n");
+			ftStatus = FT_OTHER_ERROR;
+		}
 	}
 
 exit:
@@ -143,6 +144,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ReadIDs()
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
 	boolean bFound = false;
+	FT_HANDLE ftHandle = NULL;
 
 
 	Init_libMPSSE();
@@ -158,12 +160,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ReadIDs()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -173,18 +169,19 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ReadIDs()
 			goto exit;
 		}
 
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
+		CMD_LOG("  Description=%s\n", devInfo.Description);
+
 		if (DeviceNameIsSet()) {
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
 			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
-		CMD_LOG("Dev %d:\n", i);
-		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
-		CMD_LOG("  Description=%s\n", devInfo.Description);
-
-		FT_HANDLE ftHandle = NULL;
+		ftHandle = NULL;
 		ftStatus = SPI_OpenChannel(i, &ftHandle);
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_OpenChannel failed! Cannot open MPSSE channel\n");
@@ -193,8 +190,8 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ReadIDs()
 
 		ChannelConfig config;
 		config.ClockRate = I2C_CLOCK_HIGH_SPEED_MODE;
-		config.LatencyTimer = 1;
-		config.configOptions = SPI_CONFIG_OPTION_MODE0;
+		config.LatencyTimer = 255;
+		config.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3;
 		config.Pin = 0;
 		config.reserved = 0;
 
@@ -202,7 +199,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ReadIDs()
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_InitChannel failed! Cannot configure MPSSE channel ClockRate=%d LatencyTimer=%d Options=%02d\n",
 				config.ClockRate, config.LatencyTimer, config.configOptions);
-			SPI_CloseChannel(ftHandle);
 			goto exit;
 		}
 
@@ -212,39 +208,64 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ReadIDs()
 
 		SPIFlash* pSpiFlash = new SPIFlash(ftHandle); 
 		{
-			uint32 ulJedecID = pSpiFlash->getJEDECID();
+			uint32 ulJedecID = 0;
+			uint16 ulManID = 0;
+			uint64 ullUniqueID = 0;
+
+			ulJedecID = pSpiFlash->getJEDECID();
 			CMD_LOG("JEDEC ID=0x%08x\n", ulJedecID);
 			CMD_LOG("  ManufacturerID=0x%02x\n", (ulJedecID >> 16) && 0xFF);
 			CMD_LOG("  MemoryTypeID=0x%02x\n", (ulJedecID >> 8) && 0xFF);
 			CMD_LOG("  CapacityID=0x%02x\n", (ulJedecID >> 0) && 0xFF);
 			CMD_LOG("\n");
+			if (ulJedecID == 0) {
+				ftStatus = FT_OTHER_ERROR;
+				goto exit2;
+			}
 
-			uint16 ulManID = pSpiFlash->getManID();
+			ulManID = pSpiFlash->getManID();
 			CMD_LOG("MANUFACTURER ID=0x%08x\n", ulManID);
 			CMD_LOG("  ManufacturerID=0x%02x\n", (ulManID >> 8) && 0xFF);
 			CMD_LOG("  DeviceID=0x%02x\n", (ulManID >> 0) && 0xFF);
 			CMD_LOG("\n");
-
-			uint64 ullUniqueID = pSpiFlash->getUniqueID();
-			CMD_LOG("UNIQUE ID=0x%0llx\n", ullUniqueID);
-			CMD_LOG("\n");
-
-			if (ulJedecID == 0 || ulManID == 0 || ullUniqueID == 0) {
+			if (ulManID == 0) {
 				ftStatus = FT_OTHER_ERROR;
+				goto exit2;
 			}
 
+			ullUniqueID = pSpiFlash->getUniqueID();
+			CMD_LOG("UNIQUE ID=0x%0llx\n", ullUniqueID);
+			CMD_LOG("\n");
+			if (ullUniqueID == 0) {
+				ftStatus = FT_OTHER_ERROR;
+				goto exit2;
+			}
+
+exit2:
 			delete pSpiFlash;
 			pSpiFlash = NULL;
 		}
 
 		SPI_CloseChannel(ftHandle);
+		ftHandle = NULL;
 
 		if (bFound) {
 			break;
 		}
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found!\n");
+			ftStatus = FT_OTHER_ERROR;
+		}
+	}
+
 exit:
+	if (ftHandle != NULL) {
+		SPI_CloseChannel(ftHandle);
+		ftHandle = NULL;
+	}
 	Cleanup_libMPSSE();
 	return (ftStatus == FT_OK);
 }
@@ -255,6 +276,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Power()
 	uint32 ulNumChannels = 0;
 	bool bRet = false;
 	boolean bFound = false;
+	FT_HANDLE ftHandle = NULL;
 
 
 	Init_libMPSSE();
@@ -270,12 +292,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Power()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -285,18 +301,19 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Power()
 			goto exit;
 		}
 
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
+		CMD_LOG("  Description=%s\n", devInfo.Description);
+
 		if (DeviceNameIsSet()) {
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
 			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
-		CMD_LOG("Dev %d:\n", i);
-		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
-		CMD_LOG("  Description=%s\n", devInfo.Description);
-
-		FT_HANDLE ftHandle = NULL;
+		ftHandle = NULL;
 		ftStatus = SPI_OpenChannel(i, &ftHandle);
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_OpenChannel failed! Cannot open MPSSE channel\n");
@@ -305,8 +322,8 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Power()
 
 		ChannelConfig config;
 		config.ClockRate = I2C_CLOCK_HIGH_SPEED_MODE;
-		config.LatencyTimer = 1;
-		config.configOptions = SPI_CONFIG_OPTION_MODE0;
+		config.LatencyTimer = 255;
+		config.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3;
 		config.Pin = 0;
 		config.reserved = 0;
 
@@ -314,7 +331,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Power()
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_InitChannel failed! Cannot configure MPSSE channel ClockRate=%d LatencyTimer=%d Options=%02d\n",
 				config.ClockRate, config.LatencyTimer, config.configOptions);
-			SPI_CloseChannel(ftHandle);
 			goto exit;
 		}
 
@@ -386,13 +402,25 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Power()
 		}
 
 		SPI_CloseChannel(ftHandle);
+		ftHandle = NULL;
 
 		if (bFound) {
 			break;
 		}
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found!\n");
+			ftStatus = FT_OTHER_ERROR;
+		}
+	}
+
 exit:
+	if (ftHandle != NULL) {
+		SPI_CloseChannel(ftHandle);
+		ftHandle = NULL;
+	}
 	Cleanup_libMPSSE();
 	return (ftStatus == FT_OK);
 }
@@ -403,6 +431,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Suspend()
 	uint32 ulNumChannels = 0;
 	bool bRet = false;
 	boolean bFound = false;
+	FT_HANDLE ftHandle = NULL;
 
 
 	Init_libMPSSE();
@@ -418,12 +447,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Suspend()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -433,18 +456,19 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Suspend()
 			goto exit;
 		}
 
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
+		CMD_LOG("  Description=%s\n", devInfo.Description);
+
 		if (DeviceNameIsSet()) {
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
 			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
-		CMD_LOG("Dev %d:\n", i);
-		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
-		CMD_LOG("  Description=%s\n", devInfo.Description);
-
-		FT_HANDLE ftHandle = NULL;
+		ftHandle = NULL;
 		ftStatus = SPI_OpenChannel(i, &ftHandle);
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_OpenChannel failed! Cannot open MPSSE channel\n");
@@ -453,8 +477,8 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Suspend()
 
 		ChannelConfig config;
 		config.ClockRate = I2C_CLOCK_HIGH_SPEED_MODE;
-		config.LatencyTimer = 1;
-		config.configOptions = SPI_CONFIG_OPTION_MODE0;
+		config.LatencyTimer = 255;
+		config.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3;
 		config.Pin = 0;
 		config.reserved = 0;
 
@@ -462,7 +486,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Suspend()
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_InitChannel failed! Cannot configure MPSSE channel ClockRate=%d LatencyTimer=%d Options=%02d\n",
 				config.ClockRate, config.LatencyTimer, config.configOptions);
-			SPI_CloseChannel(ftHandle);
 			goto exit;
 		}
 
@@ -534,13 +557,25 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Suspend()
 		}
 
 		SPI_CloseChannel(ftHandle);
+		ftHandle = NULL;
 
 		if (bFound) {
 			break;
 		}
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found!\n");
+			ftStatus = FT_OTHER_ERROR;
+		}
+	}
+
 exit:
+	if (ftHandle != NULL) {
+		SPI_CloseChannel(ftHandle);
+		ftHandle = NULL;
+	}
 	Cleanup_libMPSSE();
 	return (ftStatus == FT_OK);
 }
@@ -567,12 +602,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_BasicIO()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -582,16 +611,17 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_BasicIO()
 			goto exit;
 		}
 
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
+		CMD_LOG("  Description=%s\n", devInfo.Description);
+
 		if (DeviceNameIsSet()) {
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
 			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
-
-		CMD_LOG("Dev %d:\n", i);
-		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
-		CMD_LOG("  Description=%s\n", devInfo.Description);
 
 		ftHandle = NULL;
 		ftStatus = SPI_OpenChannel(i, &ftHandle);
@@ -602,8 +632,8 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_BasicIO()
 
 		ChannelConfig config;
 		config.ClockRate = I2C_CLOCK_HIGH_SPEED_MODE;
-		config.LatencyTimer = 1;
-		config.configOptions = SPI_CONFIG_OPTION_MODE0;
+		config.LatencyTimer = 255;
+		config.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3;
 		config.Pin = 0;
 		config.reserved = 0;
 
@@ -611,7 +641,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_BasicIO()
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_InitChannel failed! Cannot configure MPSSE channel ClockRate=%d LatencyTimer=%d Options=%02d\n",
 				config.ClockRate, config.LatencyTimer, config.configOptions);
-			SPI_CloseChannel(ftHandle);
 			goto exit;
 		}
 
@@ -697,6 +726,13 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_BasicIO()
 		}
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found!\n");
+			ftStatus = FT_OTHER_ERROR;
+		}
+	}
+
 exit:
 	if (ftHandle != NULL) {
 		SPI_CloseChannel(ftHandle);
@@ -728,12 +764,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_SimpleIO()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -743,16 +773,17 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_SimpleIO()
 			goto exit;
 		}
 
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
+		CMD_LOG("  Description=%s\n", devInfo.Description);
+
 		if (DeviceNameIsSet()) {
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
 			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
-
-		CMD_LOG("Dev %d:\n", i);
-		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
-		CMD_LOG("  Description=%s\n", devInfo.Description);
 
 		ftHandle = NULL;
 		ftStatus = SPI_OpenChannel(i, &ftHandle);
@@ -763,8 +794,8 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_SimpleIO()
 
 		ChannelConfig config;
 		config.ClockRate = I2C_CLOCK_HIGH_SPEED_MODE;
-		config.LatencyTimer = 1;
-		config.configOptions = SPI_CONFIG_OPTION_MODE0;
+		config.LatencyTimer = 255;
+		config.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3;
 		config.Pin = 0;
 		config.reserved = 0;
 
@@ -772,7 +803,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_SimpleIO()
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_InitChannel failed! Cannot configure MPSSE channel ClockRate=%d LatencyTimer=%d Options=%02d\n",
 				config.ClockRate, config.LatencyTimer, config.configOptions);
-			SPI_CloseChannel(ftHandle);
 			goto exit;
 		}
 
@@ -841,6 +871,13 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_SimpleIO()
 		}
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found!\n");
+			ftStatus = FT_OTHER_ERROR;
+		}
+	}
+
 exit:
 	if (ftHandle != NULL) {
 		SPI_CloseChannel(ftHandle);
@@ -872,12 +909,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ClockedIO()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -887,16 +918,17 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ClockedIO()
 			goto exit;
 		}
 
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
+		CMD_LOG("  Description=%s\n", devInfo.Description);
+
 		if (DeviceNameIsSet()) {
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
 			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
-
-		CMD_LOG("Dev %d:\n", i);
-		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
-		CMD_LOG("  Description=%s\n", devInfo.Description);
 
 		I2C_CLOCKRATE ClockRate[] = {
 			I2C_CLOCK_STANDARD_MODE ,
@@ -938,7 +970,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ClockedIO()
 					if (ftStatus != FT_OK) {
 						CMD_LOG("SPI_InitChannel failed! Cannot configure MPSSE channel ClockRate=%d LatencyTimer=%d Options=%02d\n",
 							config.ClockRate, config.LatencyTimer, config.configOptions);
-						SPI_CloseChannel(ftHandle);
 						goto exit;
 					}
 
@@ -1006,6 +1037,13 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_ClockedIO()
 		}
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found!\n");
+			ftStatus = FT_OTHER_ERROR;
+		}
+	}
+
 exit:
 	if (ftHandle != NULL) {
 		SPI_CloseChannel(ftHandle);
@@ -1021,6 +1059,7 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Erase()
 	uint32 ulNumChannels = 0;
 	bool bRet = false;
 	boolean bFound = false;
+	FT_HANDLE ftHandle = NULL;
 
 
 	Init_libMPSSE();
@@ -1036,12 +1075,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Erase()
 		goto exit;
 	}
 
-	if (ulNumChannels != 2 && ulNumChannels != 1) {
-		CMD_LOG("SPI_GetNumChannels warning! A FT_4232 should have 2 MPSSE capable channels enumerated! But UMFTPD2A is an exception.\n");
-		ftStatus = FT_OTHER_ERROR;
-		goto exit;
-	}
-
 	for (uint32 i = 0; i < ulNumChannels; i++) {
 		FT_DEVICE_LIST_INFO_NODE devInfo;
 		ftStatus = SPI_GetChannelInfo(i, &devInfo);
@@ -1051,18 +1084,19 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Erase()
 			goto exit;
 		}
 
+		CMD_LOG("Dev %d:\n", i);
+		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
+		CMD_LOG("  Description=%s\n", devInfo.Description);
+
 		if (DeviceNameIsSet()) {
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
 			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
-		CMD_LOG("Dev %d:\n", i);
-		CMD_LOG("  ID=0x%08x (%s)\n", devInfo.ID, FT_GetVidPidString(devInfo.ID));
-		CMD_LOG("  Description=%s\n", devInfo.Description);
-
-		FT_HANDLE ftHandle = NULL;
+		ftHandle = NULL;
 		ftStatus = SPI_OpenChannel(i, &ftHandle);
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_OpenChannel failed! Cannot open MPSSE channel\n");
@@ -1071,8 +1105,8 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Erase()
 
 		ChannelConfig config;
 		config.ClockRate = I2C_CLOCK_HIGH_SPEED_MODE;
-		config.LatencyTimer = 1;
-		config.configOptions = SPI_CONFIG_OPTION_MODE0;
+		config.LatencyTimer = 255;
+		config.configOptions = SPI_CONFIG_OPTION_MODE0 | SPI_CONFIG_OPTION_CS_DBUS3;
 		config.Pin = 0;
 		config.reserved = 0;
 
@@ -1080,7 +1114,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Erase()
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_InitChannel failed! Cannot configure MPSSE channel ClockRate=%d LatencyTimer=%d Options=%02d\n",
 				config.ClockRate, config.LatencyTimer, config.configOptions);
-			SPI_CloseChannel(ftHandle);
 			goto exit;
 		}
 
@@ -1097,11 +1130,11 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Erase()
 			for (int offset = 0; offset<BUFERASE; offset += 16384) {
 				memset(pucBuffer + offset, 0x55, 4096);
 				memset(pucBuffer + offset + 4096, 0xAA, 4096);
-				for (int i = 8192; i<12288; i++) {
-					pucBuffer[offset + i] = (i % 256);
+				for (int x = 8192; x<12288; x++) {
+					pucBuffer[offset + x] = (x % 256);
 				}
-				for (int i = 12288; i<16384; i++) {
-					pucBuffer[offset + i] = rand() % 256;
+				for (int x = 12288; x<16384; x++) {
+					pucBuffer[offset + x] = rand() % 256;
 				}
 			}
 
@@ -1125,7 +1158,6 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Erase()
 				goto exit;
 			}
 
-
 			delete[] pucBuffer;
 			delete[] pucBuffer2;
 			delete pSpiFlash;
@@ -1134,13 +1166,25 @@ bool FT4232_MPSSE_SPIFlash_W25Q128JV_Erase()
 
 
 		SPI_CloseChannel(ftHandle);
+		ftHandle = NULL;
 
 		if (bFound) {
 			break;
 		}
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found!\n");
+			ftStatus = FT_OTHER_ERROR;
+		}
+	}
+
 exit:
+	if (ftHandle != NULL) {
+		SPI_CloseChannel(ftHandle);
+		ftHandle = NULL;
+	}
 	Cleanup_libMPSSE();
 	return (ftStatus == FT_OK);
 }
