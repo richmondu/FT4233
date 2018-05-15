@@ -91,6 +91,7 @@ bool FT4232_D2XX_Open() {
 
 	FT_STATUS ftStatus = 0;
 	FT_HANDLE ftHandle[4] = { NULL };
+	boolean bFound = false;
 
 	DWORD dwNumDevices = 0;
 	ftStatus = FT_CreateDeviceInfoList(&dwNumDevices);
@@ -121,6 +122,8 @@ bool FT4232_D2XX_Open() {
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -163,6 +166,13 @@ bool FT4232_D2XX_Open() {
 		CMD_LOG("  Driver version=0x%08x\n", dwDriverVersion);
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -170,8 +180,9 @@ bool FT4232_D2XX_ResetPort()
 {
 	FT_STATUS ftStatus = 0;
 	FT_HANDLE ftHandle[4] = { NULL };
-
+	boolean bFound = false;
 	DWORD dwNumDevices = 0;
+
 	ftStatus = FT_CreateDeviceInfoList(&dwNumDevices);
 	if (ftStatus != FT_OK) {
 		CMD_LOG("FT_CreateDeviceInfoList failed! No devices found!\n");
@@ -200,6 +211,8 @@ bool FT4232_D2XX_ResetPort()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -233,6 +246,13 @@ bool FT4232_D2XX_ResetPort()
 		ftHandle[i] = NULL;
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -240,8 +260,9 @@ bool FT4232_D2XX_CyclePort()
 {
 	FT_STATUS ftStatus = 0;
 	FT_HANDLE ftHandle[4] = { NULL };
-
+	boolean bFound = false;
 	DWORD dwNumDevices = 0;
+
 	ftStatus = FT_CreateDeviceInfoList(&dwNumDevices);
 	if (ftStatus != FT_OK) {
 		CMD_LOG("FT_CreateDeviceInfoList failed! No devices found!\n");
@@ -270,6 +291,8 @@ bool FT4232_D2XX_CyclePort()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -352,6 +375,13 @@ bool FT4232_D2XX_CyclePort()
 		ftHandle[i] = NULL;
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -359,8 +389,9 @@ bool FT4232_D2XX_ResetDevice()
 {
 	FT_STATUS ftStatus = 0;
 	FT_HANDLE ftHandle[4] = { NULL };
-
+	boolean bFound = false;
 	DWORD dwNumDevices = 0;
+
 	ftStatus = FT_CreateDeviceInfoList(&dwNumDevices);
 	if (ftStatus != FT_OK) {
 		CMD_LOG("FT_CreateDeviceInfoList failed! No devices found!\n");
@@ -389,6 +420,8 @@ bool FT4232_D2XX_ResetDevice()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -470,6 +503,13 @@ bool FT4232_D2XX_ResetDevice()
 		CMD_LOG("  Device can be opened after reset device\n");
 		FT_Close(ftHandle[i]);
 		ftHandle[i] = NULL;
+	}
+
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			return false;
+		}
 	}
 
 	return true;
@@ -625,8 +665,9 @@ bool FT4232_D2XX_SPIUnmanaged()
 {
 	FT_STATUS ftStatus = 0;
 	FT_HANDLE ftHandle[4] = { NULL };
-
+	boolean bFound = false;
 	DWORD dwNumDevices = 0;
+
 	ftStatus = FT_CreateDeviceInfoList(&dwNumDevices);
 	if (ftStatus != FT_OK) {
 		CMD_LOG("FT_CreateDeviceInfoList failed! No devices found!\n");
@@ -655,6 +696,8 @@ bool FT4232_D2XX_SPIUnmanaged()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -908,6 +951,13 @@ bool FT4232_D2XX_SPIUnmanaged()
 		}
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -915,9 +965,9 @@ static bool SetSync245(bool bSet)
 {
 	FT_STATUS ftStatus = 0;
 	FT_HANDLE ftHandle[4] = { NULL };
-
-
+	boolean bFound = false;
 	DWORD dwNumDevices = 0;
+
 	ftStatus = FT_CreateDeviceInfoList(&dwNumDevices);
 	if (ftStatus != FT_OK) {
 		CMD_LOG("FT_CreateDeviceInfoList failed! No devices found!\n");
@@ -946,6 +996,8 @@ static bool SetSync245(bool bSet)
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -991,6 +1043,13 @@ static bool SetSync245(bool bSet)
 		if (ftHandle[i] != NULL) {
 			FT_Close(ftHandle[i]);
 			ftHandle[i] = NULL;
+		}
+	}
+
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			return false;
 		}
 	}
 

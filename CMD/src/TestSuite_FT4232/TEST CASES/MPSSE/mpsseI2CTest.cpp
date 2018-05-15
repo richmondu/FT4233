@@ -86,6 +86,7 @@ bool FT4232_MPSSE_I2C_Open()
 {
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
+	boolean bFound = false;
 
 
 	Init_libMPSSE();
@@ -114,6 +115,8 @@ bool FT4232_MPSSE_I2C_Open()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -134,6 +137,12 @@ bool FT4232_MPSSE_I2C_Open()
 		}
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			ftStatus = FT_DEVICE_NOT_FOUND;
+		}
+	}
 
 exit:
 	Cleanup_libMPSSE();
@@ -144,7 +153,7 @@ bool FT4232_MPSSE_I2C_Configure()
 {
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
-
+	boolean bFound = false;
 
 	Init_libMPSSE();
 
@@ -172,6 +181,8 @@ bool FT4232_MPSSE_I2C_Configure()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -217,6 +228,13 @@ bool FT4232_MPSSE_I2C_Configure()
 		if (ftStatus != FT_OK) {
 			CMD_LOG("I2C_CloseChannel failed!\n");
 			goto exit;
+		}
+	}
+
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			ftStatus = FT_DEVICE_NOT_FOUND;
 		}
 	}
 
@@ -417,6 +435,7 @@ bool FT4232_MPSSE_I2C_IO_EEPROM24LC024H_BasicIO()
 	if (DeviceNameIsSet()) {
 		if (!bFound) {
 			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			ftStatus = FT_DEVICE_NOT_FOUND;
 		}
 	}
 
@@ -552,6 +571,7 @@ bool FT4232_MPSSE_I2C_IO_EEPROM24LC024H_ClockedIO()
 	if (DeviceNameIsSet()) {
 		if (!bFound) {
 			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			ftStatus = FT_DEVICE_NOT_FOUND;
 		}
 	}
 
@@ -711,6 +731,7 @@ bool FT4232_MPSSE_I2C_IO_EEPROM24LC024H_StressIO()
 	if (DeviceNameIsSet()) {
 		if (!bFound) {
 			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			ftStatus = FT_DEVICE_NOT_FOUND;
 		}
 	}
 

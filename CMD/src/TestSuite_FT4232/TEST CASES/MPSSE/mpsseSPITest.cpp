@@ -86,7 +86,7 @@ bool FT4232_MPSSE_SPI_Open()
 {
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
-
+	boolean bFound = false;
 
 	Init_libMPSSE();
 
@@ -114,6 +114,8 @@ bool FT4232_MPSSE_SPI_Open()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -134,6 +136,13 @@ bool FT4232_MPSSE_SPI_Open()
 		}
 	}
 
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			ftStatus = FT_DEVICE_NOT_FOUND;
+		}
+	}
+
 exit:
 	Cleanup_libMPSSE();
 	return (ftStatus == FT_OK);
@@ -143,7 +152,7 @@ bool FT4232_MPSSE_SPI_Configure()
 {
 	FT_STATUS ftStatus = FT_OK;
 	uint32 ulNumChannels = 0;
-
+	boolean bFound = false;
 
 	Init_libMPSSE();
 
@@ -171,6 +180,8 @@ bool FT4232_MPSSE_SPI_Configure()
 			if (!DeviceNameCompare(devInfo.Description)) {
 				continue;
 			}
+			bFound = true;
+			CMD_LOG("  Specified device is found!\n");
 		}
 
 		CMD_LOG("Dev %d:\n", i);
@@ -228,6 +239,13 @@ bool FT4232_MPSSE_SPI_Configure()
 		if (ftStatus != FT_OK) {
 			CMD_LOG("SPI_CloseChannel failed!\n");
 			goto exit;
+		}
+	}
+
+	if (DeviceNameIsSet()) {
+		if (!bFound) {
+			CMD_LOG("Specified device is NOT found! %s\n", TEST_CONFIG_DEVICE_NAME.c_str());
+			ftStatus = FT_DEVICE_NOT_FOUND;
 		}
 	}
 

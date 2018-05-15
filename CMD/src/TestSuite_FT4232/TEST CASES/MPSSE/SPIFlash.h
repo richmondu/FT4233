@@ -1,5 +1,6 @@
 #pragma once
 #include "libMPSSE_spi.h"
+#include "../D2XX/ftd2xx.h"
 #include "../D2XX/ftdiIds.h"
 #include "../../TEST SUITE/TestSuite.h"
 #include "../../TEST SUITE/TestLogger.h"

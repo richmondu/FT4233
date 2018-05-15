@@ -15,7 +15,7 @@ uint32 SPIFlash::getJEDECID(void) {
 	// Write the JEDEC ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(JEDECID, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("getJEDECID: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return 0;
@@ -23,7 +23,7 @@ uint32 SPIFlash::getJEDECID(void) {
 
 	// Read Manufacturer ID
 	m_ftStatus = SPI_Read(m_ftHandle, &ucResult, 1, &ulTransferred, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("getJEDECID: SPI_Read failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return 0;
@@ -32,7 +32,7 @@ uint32 SPIFlash::getJEDECID(void) {
 
 	// Read Memory Type ID
 	m_ftStatus = SPI_Read(m_ftHandle, &ucResult, 1, &ulTransferred, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("getJEDECID: SPI_Read failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return 0;
@@ -41,7 +41,7 @@ uint32 SPIFlash::getJEDECID(void) {
 
 	// Read Capacity ID
 	m_ftStatus = SPI_Read(m_ftHandle, &ucResult, 1, &ulTransferred, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("getJEDECID: SPI_Read failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return 0;
@@ -61,7 +61,7 @@ uint16 SPIFlash::getManID(void) {
 	// Write the MAN ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(MANID, 1, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("getManID: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return 0;
@@ -69,7 +69,7 @@ uint16 SPIFlash::getManID(void) {
 
 	// Read Manufacturer ID
 	m_ftStatus = SPI_Read(m_ftHandle, &ucResult, 1, &ulTransferred, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("getManID: SPI_Read failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return 0;
@@ -78,7 +78,7 @@ uint16 SPIFlash::getManID(void) {
 
 	// Read Device ID
 	m_ftStatus = SPI_Read(m_ftHandle, &ucResult, 1, &ulTransferred, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("getManID: SPI_Read failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return 0;
@@ -98,7 +98,7 @@ uint64 SPIFlash::getUniqueID(void) {
 	// Write the Unique ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(UNIQUEID, 4, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("getUniqueID: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return 0;
@@ -106,7 +106,7 @@ uint64 SPIFlash::getUniqueID(void) {
 
 	// Read Unique ID
 	m_ftStatus = SPI_Read(m_ftHandle, (uint8*)&ullResult, sizeof(ullResult), &ulTransferred, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("getUniqueID: SPI_Read failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return 0;
@@ -122,7 +122,7 @@ bool SPIFlash::powerUp(void) {
 	// Write the RELEASE ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(RELEASE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("powerUp: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -132,7 +132,7 @@ bool SPIFlash::powerUp(void) {
 
 	// Write the WRITEENABLE ID
 	m_ftStatus = WRITE_INSTRUCTION(WRITEENABLE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("powerUp: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -145,7 +145,7 @@ bool SPIFlash::powerUp(void) {
 
 	// Write the WRITEENABLE ID
 	m_ftStatus = WRITE_INSTRUCTION(WRITEDISABLE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("powerUp: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -164,7 +164,7 @@ bool SPIFlash::powerDown(void) {
 	// Write the POWERDOWN ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(POWERDOWN, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("powerDown: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -175,7 +175,7 @@ bool SPIFlash::powerDown(void) {
 
 	// Write the WRITEENABLE ID
 	m_ftStatus = WRITE_INSTRUCTION(WRITEENABLE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("powerDown: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -208,7 +208,7 @@ bool SPIFlash::suspendProg(void) {
 	// Write the SUSPEND ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(SUSPEND, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("suspendProg: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -237,7 +237,7 @@ bool SPIFlash::resumeProg(void) {
 	// Write the RESUME ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(RESUME, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("resumeProg: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -265,7 +265,7 @@ bool SPIFlash::eraseChip(void) {
 	// Write the WRITEENABLE ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(WRITEENABLE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("eraseChip: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -278,7 +278,7 @@ bool SPIFlash::eraseChip(void) {
 
 	// Write the CHIPERASE ID
 	m_ftStatus = WRITE_INSTRUCTION(CHIPERASE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("eraseChip: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -306,7 +306,7 @@ bool SPIFlash::eraseSector(uint32 ulAddr) {
 	// Write the WRITEENABLE ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(WRITEENABLE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("eraseSector: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -319,7 +319,7 @@ bool SPIFlash::eraseSector(uint32 ulAddr) {
 
 	// Write the SECTORERASE ID
 	m_ftStatus = WRITE_INSTRUCTION(SECTORERASE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("eraseSector: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -350,7 +350,7 @@ bool SPIFlash::eraseBlock32K() {
 	// Write the WRITEENABLE ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(WRITEENABLE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("eraseBlock32K: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -366,7 +366,7 @@ bool SPIFlash::eraseBlock32K() {
 
 	// Write the BLOCK32ERASE ID
 	m_ftStatus = WRITE_INSTRUCTION(BLOCK32ERASE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("eraseBlock32K: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -388,7 +388,7 @@ bool SPIFlash::eraseBlock64K() {
 
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(BLOCK64ERASE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("eraseBlock64K: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -404,7 +404,7 @@ bool SPIFlash::eraseBlock64K() {
 
 	// Write the BLOCK64ERASE ID
 	m_ftStatus = WRITE_INSTRUCTION(BLOCK64ERASE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("eraseBlock64K: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -435,7 +435,7 @@ bool SPIFlash::write(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool 
 	// Write the WRITEENABLE ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(WRITEENABLE, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("write: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -454,7 +454,7 @@ bool SPIFlash::write(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool 
 
 		// Write the PAGEPROG ID
 		m_ftStatus = WRITE_INSTRUCTION(PAGEPROG, 0, 0);
-		if (!m_ftStatus) {
+		if (m_ftStatus != FT_OK) {
 			CMD_LOG("write: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 			CHIP_SELECT();
 			return false;
@@ -463,7 +463,7 @@ bool SPIFlash::write(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool 
 		// Write address
 		uint32 ulTransferred = 0;
 		m_ftStatus = SPI_Write(m_ftHandle, (uint8*)&ulAddr, 4, &ulTransferred, 0);
-		if (!m_ftStatus) {
+		if (m_ftStatus != FT_OK) {
 			CMD_LOG("write: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 			CHIP_SELECT();
 			return 0;
@@ -472,7 +472,7 @@ bool SPIFlash::write(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool 
 		for (uint16_t i = 0; i < ulBufferSize; ++i) {
 			ulTransferred = 0;
 			m_ftStatus = SPI_Write(m_ftHandle, &pucBuffer[i], 1, &ulTransferred, 0);
-			if (!m_ftStatus) {
+			if (m_ftStatus != FT_OK) {
 				CMD_LOG("write: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 				CHIP_SELECT();
 				return 0;
@@ -493,7 +493,7 @@ bool SPIFlash::write(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool 
 
 			// Write the PAGEPROG ID
 			m_ftStatus = WRITE_INSTRUCTION(PAGEPROG, 0, 0);
-			if (!m_ftStatus) {
+			if (m_ftStatus != FT_OK) {
 				CMD_LOG("write: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 				CHIP_SELECT();
 				return false;
@@ -502,7 +502,7 @@ bool SPIFlash::write(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool 
 			// Write address
 			uint32 ulTransferred = 0;
 			m_ftStatus = SPI_Write(m_ftHandle, (uint8*)&ulTempAddr, 4, &ulTransferred, 0);
-			if (!m_ftStatus) {
+			if (m_ftStatus != FT_OK) {
 				CMD_LOG("write: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 				CHIP_SELECT();
 				return 0;
@@ -511,7 +511,7 @@ bool SPIFlash::write(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool 
 			for (uint16_t i = 0; i < writeBufSz; ++i) {
 				ulTransferred = 0;
 				m_ftStatus = SPI_Write(m_ftHandle, &pucBuffer[i], 1, &ulTransferred, 0);
-				if (!m_ftStatus) {
+				if (m_ftStatus != FT_OK) {
 					CMD_LOG("write: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 					CHIP_SELECT();
 					return 0;
@@ -531,7 +531,7 @@ bool SPIFlash::write(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool 
 
 			// Write the WRITEENABLE ID
 			m_ftStatus = WRITE_INSTRUCTION(WRITEENABLE, 0, SPI_TRANSFER_OPTIONS_CHIPSELECT_ENABLE | SPI_TRANSFER_OPTIONS_CHIPSELECT_DISABLE);
-			if (!m_ftStatus) {
+			if (m_ftStatus != FT_OK) {
 				CMD_LOG("write: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 				CHIP_SELECT();
 				return false;
@@ -560,7 +560,7 @@ bool SPIFlash::write(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool 
 
 		// Write the READDATA ID
 		m_ftStatus = WRITE_INSTRUCTION(READDATA, 0, 0);
-		if (!m_ftStatus) {
+		if (m_ftStatus != FT_OK) {
 			CMD_LOG("write: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 			CHIP_SELECT();
 			return false;
@@ -569,7 +569,7 @@ bool SPIFlash::write(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool 
 		// Write address
 		uint32 ulTransferred = 0;
 		m_ftStatus = SPI_Write(m_ftHandle, (uint8*)&ulAddr, 4, &ulTransferred, 0);
-		if (!m_ftStatus) {
+		if (m_ftStatus != FT_OK) {
 			CMD_LOG("write: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 			CHIP_SELECT();
 			return 0;
@@ -579,7 +579,7 @@ bool SPIFlash::write(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool 
 			uint8 ucByte = 0;
 			ulTransferred = 0;
 			m_ftStatus = SPI_Read(m_ftHandle, &ucByte, 1, &ulTransferred, 0);
-			if (!m_ftStatus) {
+			if (m_ftStatus != FT_OK) {
 				CMD_LOG("write: SPI_Read failed! m_ftStatus=%08x\n", m_ftStatus);
 				CHIP_SELECT();
 				return 0;
@@ -613,7 +613,7 @@ bool SPIFlash::read(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool b
 	// Write FASTREAD/READDATA ID
 	CHIP_DESELECT();
 	m_ftStatus = WRITE_INSTRUCTION(bFastRead ? FASTREAD : READDATA, 0, 0);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("read: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		CHIP_SELECT();
 		return false;
@@ -623,7 +623,7 @@ bool SPIFlash::read(uint32 ulAddr, uint8 *pucBuffer, uint32 ulBufferSize, bool b
 	do {
 		uint32 ulTransferred = 0;
 		m_ftStatus = SPI_Read(m_ftHandle, pucBuffer+ulTotal, ulBufferSize-ulTotal, &ulTransferred, 0);
-		if (!m_ftStatus) {
+		if (m_ftStatus != FT_OK) {
 			CMD_LOG("read: SPI_Read failed!  m_ftStatus=%08x\n", m_ftStatus);
 			CHIP_SELECT();
 			return 0;
@@ -653,14 +653,14 @@ FT_STATUS SPIFlash::WRITE_INSTRUCTION(uint8 ucCommand, uint32 ulDummyCount, uint
 
 
 	m_ftStatus = SPI_Write(m_ftHandle, &ucCommand, 1, &ulTransferred, ulOptions);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("WRITE_INSTRUCTION: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		return 0;
 	}
 
 	if (ulDummyCount) {
 		m_ftStatus = SPI_Write(m_ftHandle, 0, ulDummyCount, &ulTransferred, 0);
-		if (!m_ftStatus) {
+		if (m_ftStatus != FT_OK) {
 			CMD_LOG("WRITE_INSTRUCTION: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 			return 0;
 		}
@@ -676,14 +676,14 @@ uint8 SPIFlash::READ_STAT(uint8 ucStatMode) {
 
 	// Write the POWERDOWN ID
 	m_ftStatus = WRITE_INSTRUCTION(ucStatMode, 0, SPI_TRANSFER_OPTIONS_CHIPSELECT_ENABLE);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("READ_STAT: SPI_Write failed! m_ftStatus=%08x\n", m_ftStatus);
 		return 0;
 	}
 
 	// Read Stat
 	m_ftStatus = SPI_Read(m_ftHandle, &ucResult, 1, &ulTransferred, SPI_TRANSFER_OPTIONS_CHIPSELECT_DISABLE);
-	if (!m_ftStatus) {
+	if (m_ftStatus != FT_OK) {
 		CMD_LOG("READ_STAT: SPI_Read failed! m_ftStatus=%08x\n", m_ftStatus);
 		return 0;
 	}
