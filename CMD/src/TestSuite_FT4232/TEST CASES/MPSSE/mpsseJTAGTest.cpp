@@ -25,6 +25,28 @@ static FT_STATUS readIR(FTC_HANDLE ftHandle, BYTE* byteIRdefault, BYTE* byteBypa
 	// Go to Shift-IR, write 0x7F and read then go to IDLE 
 	//
 
+#if 0
+
+	oWriteBuf[0] = 0xFF;
+	ftStatus = JTAG_AddDeviceWriteReadCmd(ftHandle, TRUE, 7, &oWriteBuf, 1, RUN_TEST_IDLE_STATE);
+	if (ftStatus != FT_OK) {
+		CMD_LOG("readIR JTAG_AddWriteReadCmd failed! 0x7F to ShiftIR then go to RTI! ftStatus=0x%08x\n", ftStatus);
+		return ftStatus;
+	}
+
+	ReadCmdSequenceDataByteBuffer buf = { 0 };
+	ftStatus = JTAG_ExecuteCmdSequence(ftHandle, &buf, &dwNumBytesReturned);
+	if (ftStatus != FT_OK) {
+		CMD_LOG("JTAG_ExecuteCmdSequence failed! ftStatus=0x%08x dwNumBytesReturned=%d\n", ftStatus, dwNumBytesReturned);
+		return ftStatus;
+	}
+
+	CMD_LOG("readIR: ShiftIR TDI 11111111 expecting TDO 10000001! dwNumBytesReturned=%d\n", dwNumBytesReturned);
+	if (dwNumBytesReturned == 1) {
+		CMD_LOG("readIR: buf[0]=0x%02x\n", buf[0]);
+		*byteIRdefault = buf[0];
+	}
+#else
 	memset(oWriteBuf, 0, sizeof(oWriteBuf));
 	memset(oReadBuf, 0, sizeof(oReadBuf));
 	dwNumBytesReturned = 0;
@@ -45,12 +67,28 @@ static FT_STATUS readIR(FTC_HANDLE ftHandle, BYTE* byteIRdefault, BYTE* byteBypa
 		CMD_LOG("readIR: buf[0]=0x%02x buf[1]=0x%02x\n", oReadBuf[0], oReadBuf[1]);
 		*byteIRdefault = oReadBuf[1];
 	}
+#endif
 
 
 	//
 	// Go to Shift-DR, write 0x01 and read then go to IDLE 
 	//
 
+#if 0
+	oWriteBuf[0] = 0x01;
+	ftStatus = JTAG_AddDeviceWriteReadCmd(ftHandle, FALSE, 2, &oWriteBuf, 1, TEST_LOGIC_STATE);
+	if (ftStatus != FT_OK) {
+		CMD_LOG("readIR JTAG_Write failed! 0x7F to ShiftIR then go to RTI! ftStatus=0x%08x\n", ftStatus);
+		return ftStatus;
+	}
+
+	buf[0] = 0;
+	ftStatus = JTAG_ExecuteCmdSequence(ftHandle, &buf, &dwNumBytesReturned);
+	if (ftStatus != FT_OK) {
+		CMD_LOG("JTAG_ExecuteCmdSequence failed! ftStatus=0x%08x dwNumBytesReturned=%d\n", ftStatus, dwNumBytesReturned);
+		return ftStatus;
+	}
+#else
 	memset(oWriteBuf, 0, sizeof(oWriteBuf));
 	memset(oReadBuf, 0, sizeof(oReadBuf));
 	dwNumBytesReturned = 0;
@@ -71,8 +109,9 @@ static FT_STATUS readIR(FTC_HANDLE ftHandle, BYTE* byteIRdefault, BYTE* byteBypa
 		CMD_LOG("readIR: buf[0]=0x%02x buf[1]=0x%02x\n", oReadBuf[0], oReadBuf[1]);
 		*byteBypass = oReadBuf[1] >> 5;
 	}
+#endif
 
-#if 0
+#if 1
 	//
 	// Generate 3 clock pulses
 	//
@@ -182,6 +221,26 @@ bool FT4232_MPSSE_JTAG_TISN74BCT8244A()
 			goto exit;
 		}
 
+		FTC_INPUT_OUTPUT_PINS pLowInputOutputPinsData = { FALSE };
+		pLowInputOutputPinsData.bPin1InputOutputState = TRUE;
+		pLowInputOutputPinsData.bPin2InputOutputState = TRUE;
+		pLowInputOutputPinsData.bPin3InputOutputState = FALSE;
+		pLowInputOutputPinsData.bPin4InputOutputState = TRUE;
+		pLowInputOutputPinsData.bPin1LowHighState = FALSE;
+		pLowInputOutputPinsData.bPin2LowHighState = FALSE;
+		pLowInputOutputPinsData.bPin3LowHighState = FALSE;
+		pLowInputOutputPinsData.bPin4LowHighState = TRUE;
+		FTH_INPUT_OUTPUT_PINS pHighInputOutputPinsData = { FALSE };
+
+		ftStatus = JTAG_SetHiSpeedDeviceGPIOs(
+			ftHandle, 
+			TRUE, &pLowInputOutputPinsData,
+			TRUE, &pHighInputOutputPinsData);
+		if (ftStatus != FTC_SUCCESS) {
+			CMD_LOG("JTAG_SetHiSpeedDeviceGeneralPurposeInputOutputPins failed! ftStatus=0x%08x\n", ftStatus);
+			goto exit;
+		}
+
 		/*
 		// TODO: Is this needed?
 		FTC_INPUT_OUTPUT_PINS pinsLow = { FALSE };
@@ -278,8 +337,8 @@ static FT_STATUS readIR2(FTC_HANDLE ftHandle, BYTE* byteIRdefault, BYTE* byteByp
 	memset(oWriteBuf, 0, sizeof(oWriteBuf));
 	memset(oReadBuf, 0, sizeof(oReadBuf));
 	dwNumBytesReturned = 0;
-	dwNumBitsToWrite = 8;
-	oWriteBuf[0] = 0xFF; // 11111111
+	dwNumBitsToWrite = 7;
+	oWriteBuf[0] = 0x7F; // 11111111
 
 	ftStatus = JTAG_WriteRead(ftHandle, TRUE, dwNumBitsToWrite, &oWriteBuf, 1, &oReadBuf, &dwNumBytesReturned, RUN_TEST_IDLE_STATE);
 	if (ftStatus != FT_OK) {
@@ -304,8 +363,8 @@ static FT_STATUS readIR2(FTC_HANDLE ftHandle, BYTE* byteIRdefault, BYTE* byteByp
 	memset(oWriteBuf, 0, sizeof(oWriteBuf));
 	memset(oReadBuf, 0, sizeof(oReadBuf));
 	dwNumBytesReturned = 0;
-	dwNumBitsToWrite = 3;
-	oWriteBuf[0] = 0x5; // 101
+	dwNumBitsToWrite = 2;
+	oWriteBuf[0] = 0x1; // 101
 
 	ftStatus = JTAG_WriteRead(ftHandle, FALSE, dwNumBitsToWrite, &oWriteBuf, 1, &oReadBuf, &dwNumBytesReturned, TEST_LOGIC_STATE);
 	if (ftStatus != FT_OK) {
@@ -423,8 +482,8 @@ bool FT4232_MPSSE_JTAG_TISN74BCT8244A_2()
 		}
 
 		// TODO: Check if clock divisor is correct
-		DWORD dwClockDivisor = 0x05DB; // Value of clock divisor, SCL Frequency = 60/((1+0x05DB)*2) (MHz) = 20khz
-		// DWORD dwClockDivisor = 0x012B; // Value of clock divisor, SCL Frequency = 12/((1+0x012B)*2) (MHz) = 20khz
+		// DWORD dwClockDivisor = 0x05DB; // Value of clock divisor, SCL Frequency = 60/((1+0x05DB)*2) (MHz) = 20khz
+		DWORD dwClockDivisor = 0x012B; // Value of clock divisor, SCL Frequency = 12/((1+0x012B)*2) (MHz) = 20khz
 		CMD_LOG("JTAG_InitDevice dwClockDivisor=%08x\n", dwClockDivisor);
 		ftStatus = JTAG_InitDevice(ftHandle, dwClockDivisor);
 		if (ftStatus != FTC_SUCCESS) {
@@ -476,6 +535,7 @@ exit:
 	return (ftStatus == FTC_SUCCESS);
 }
 
+#if 0
 bool FT4232_MPSSE_JTAG_TISN74BCT8244A_3()
 {
 	FTC_STATUS ftStatus = FTC_SUCCESS;
@@ -614,5 +674,6 @@ exit:
 	}
 	return (ftStatus == FTC_SUCCESS);
 }
+#endif
 
 

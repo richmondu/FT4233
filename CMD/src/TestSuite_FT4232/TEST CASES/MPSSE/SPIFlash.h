@@ -84,6 +84,7 @@ private:
 	bool IS_POWERDOWN();
 	bool IS_NOTBUSY();
 	bool IS_NOSUSPEND();
+	FT_STATUS WRITE_ADDRESS(uint32 ulAddr);
 };
 
 

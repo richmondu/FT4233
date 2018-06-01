@@ -1,9 +1,13 @@
 import java.awt.event.*; // Using AWT event classes and listener interfaces
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.concurrent.TimeUnit;
+
 import javax.swing.*;
 import javax.swing.text.DefaultCaret;
 
@@ -415,6 +419,7 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
                 	Process p;
                 	try {
             			//p = Runtime.getRuntime().exec(cmd);
+                		textArea.setText("");
                 		p = (new ProcessBuilder(cmd)).start();
                 	}
                 	catch (Exception x) {
@@ -436,6 +441,9 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
 							@Override
 							public void run() {
 								System.out.printf("%s\n", line);
+								if (textArea.getLineCount() > 500) {
+									textArea.setText("");
+								}
 								textArea.append(this.line);
 								textArea.append("\n");
                 				textArea.setCaretPosition(textArea.getDocument().getLength());
@@ -470,7 +478,21 @@ public class TestSuite_Gui extends JFrame implements ActionListener {
             		{"taskkill.exe", "/im", "TestSuite_FT4232.exe", "/f", "/t"};
 				try {
 					Process p = (new ProcessBuilder(cmd)).start();
-                	p.waitFor();
+                	boolean ret = p.waitFor(1, TimeUnit.SECONDS);
+                	if (ret != true) {
+                    	textArea.setText("\n\nThe test is still running!\n");
+                		BufferedWriter buf = new BufferedWriter(new OutputStreamWriter(p.getOutputStream()));
+                		if (buf != null) {
+                			for (int i=0; i<10; i++) {
+                				buf.write("quit");
+                            	textArea.append("\n\nForcing the test to abort...\n");
+                				ret = p.waitFor(300, TimeUnit.MILLISECONDS);
+                				if (ret) {
+                					break;
+                				}
+                			}
+                		}
+                	}
                 	textArea.append("\n\nThe test has been aborted successfully!\n");
 				} catch (IOException e) {
 					e.printStackTrace();
